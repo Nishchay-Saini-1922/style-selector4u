@@ -1,0 +1,1386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DRIP — AI Outfit Advisor</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0d0d0d;--s1:#161616;--s2:#1e1e1e;--s3:#252525;
+  --bd:rgba(255,255,255,0.08);--bd2:rgba(255,255,255,0.15);
+  --tx:#f0ede8;--mt:#777;--ac:#c8f064;--acd:#9fc040;
+  --ac2:rgba(200,240,100,0.09);--ac3:rgba(200,240,100,0.22);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--tx);font-family:'DM Sans',sans-serif;font-weight:300;min-height:100vh;overflow-x:hidden;}
+
+/* ── pages ── */
+.page{display:none;min-height:100vh;flex-direction:column;}
+.page.active{display:flex;}
+
+/* ── header ── */
+header{padding:1.1rem 2rem;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--bd);flex-shrink:0;}
+.logo{font-family:'Bebas Neue',sans-serif;font-size:1.9rem;letter-spacing:4px;color:var(--ac);}
+.step-ind{font-size:.72rem;color:var(--mt);letter-spacing:2px;text-transform:uppercase;}
+.pbar{height:2px;background:var(--bd);flex-shrink:0;}
+.pfill{height:100%;background:var(--ac);transition:width .5s ease;}
+
+/* ── survey body ── */
+.sbody{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2.5rem 1.5rem;max-width:740px;margin:0 auto;width:100%;}
+.qlabel{font-size:.68rem;letter-spacing:3px;text-transform:uppercase;color:var(--ac);margin-bottom:.65rem;}
+.qtxt{font-family:'Bebas Neue',sans-serif;font-size:clamp(1.7rem,5vw,2.8rem);letter-spacing:2px;line-height:1.1;text-align:center;margin-bottom:1.7rem;}
+
+/* ── option grid ── */
+.ogrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(145px,1fr));gap:.58rem;width:100%;}
+.ogrid.wide{grid-template-columns:repeat(auto-fill,minmax(178px,1fr));}
+.ogrid.slim{grid-template-columns:repeat(auto-fill,minmax(108px,1fr));}
+.ocard{background:var(--s1);border:1px solid var(--bd);border-radius:11px;padding:.95rem .8rem;cursor:pointer;transition:border-color .18s,background .18s,transform .18s;text-align:center;position:relative;user-select:none;}
+.ocard:hover{border-color:var(--ac);background:var(--s2);transform:translateY(-2px);}
+.ocard.sel{border-color:var(--ac);background:var(--ac2);}
+.ocard.sel::after{content:'✓';position:absolute;top:6px;right:8px;font-size:.68rem;color:var(--ac);}
+.oemoji{font-size:1.45rem;margin-bottom:.3rem;display:block;}
+.olabel{font-size:.78rem;font-weight:400;line-height:1.3;}
+.osub{font-size:.66rem;color:var(--mt);margin-top:.1rem;}
+
+/* ── buttons ── */
+.nbtn{padding:.8rem 2.2rem;background:var(--ac);color:#0d0d0d;border:none;border-radius:50px;font-family:'DM Sans',sans-serif;font-size:.84rem;font-weight:500;cursor:pointer;letter-spacing:1px;transition:all .2s;margin-top:1.5rem;}
+.nbtn:hover{background:var(--acd);transform:scale(1.03);}
+.nbtn:disabled{opacity:.35;cursor:not-allowed;transform:none;}
+.oblank{padding:.55rem 1.1rem;background:transparent;border:1px solid var(--bd);border-radius:50px;color:var(--tx);font-family:'DM Sans',sans-serif;font-size:.76rem;cursor:pointer;transition:all .2s;}
+.oblank:hover{border-color:var(--ac);color:var(--ac);}
+.osolid{padding:.55rem 1.3rem;background:var(--ac);border:none;border-radius:50px;color:#0d0d0d;font-family:'DM Sans',sans-serif;font-size:.76rem;font-weight:500;cursor:pointer;transition:all .2s;}
+.osolid:hover{background:var(--acd);}
+
+/* ── substep panel ── */
+.sspanel{display:none;flex-direction:column;align-items:center;width:100%;animation:fi .3s ease;}
+.sspanel.open{display:flex;}
+.ssback{align-self:flex-start;background:none;border:none;color:var(--mt);font-family:'DM Sans',sans-serif;font-size:.76rem;cursor:pointer;margin-bottom:.85rem;padding:0;letter-spacing:1px;}
+.ssback:hover{color:var(--ac);}
+.sstitle{font-family:'Bebas Neue',sans-serif;font-size:1.35rem;letter-spacing:2px;color:var(--ac);margin-bottom:.2rem;text-align:center;}
+.sssub{font-size:.74rem;color:var(--mt);margin-bottom:.9rem;text-align:center;}
+
+/* ── color picker ── */
+.sec-lbl{font-size:.65rem;letter-spacing:2px;text-transform:uppercase;color:var(--mt);margin-bottom:.55rem;}
+.csec{width:100%;max-width:560px;margin-bottom:.85rem;}
+.cdots{display:flex;flex-wrap:wrap;gap:.42rem;}
+.cdot{width:30px;height:30px;border-radius:50%;cursor:pointer;border:2px solid transparent;transition:all .18s;flex-shrink:0;position:relative;}
+.cdot:hover{transform:scale(1.2);}
+.cdot.sel{border-color:var(--ac);transform:scale(1.2);}
+.cdot.sel::after{content:'✓';position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:.5rem;color:#fff;text-shadow:0 0 4px #000;}
+.sel-colors{display:flex;flex-wrap:wrap;gap:.32rem;margin-top:.55rem;min-height:22px;}
+.ctag{padding:.2rem .6rem;background:var(--s2);border:1px solid var(--bd2);border-radius:50px;font-size:.68rem;color:var(--tx);display:flex;align-items:center;gap:.28rem;}
+.ctag-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
+.ctag-x{cursor:pointer;color:var(--mt);font-size:.62rem;}
+.ctag-x:hover{color:var(--ac);}
+
+/* ── design/fit tags ── */
+.dtags{display:flex;flex-wrap:wrap;gap:.38rem;}
+.dtag{padding:.26rem .68rem;background:var(--s1);border:1px solid var(--bd);border-radius:50px;font-size:.72rem;cursor:pointer;transition:all .18s;color:var(--tx);}
+.dtag:hover{border-color:var(--ac);}
+.dtag.sel{border-color:var(--ac);background:var(--ac2);color:var(--ac);}
+
+/* ── tip / suggestion card ── */
+.tip-wrap{display:flex;flex-direction:column;align-items:center;width:100%;gap:.9rem;}
+.tip-card{background:var(--s2);border:1px solid var(--bd2);border-radius:14px;padding:1.4rem 1.5rem;width:100%;max-width:500px;text-align:center;}
+.tip-emoji{font-size:1.8rem;margin-bottom:.5rem;}
+.tip-q{font-family:'Bebas Neue',sans-serif;font-size:1.45rem;letter-spacing:2px;line-height:1.15;margin-bottom:.35rem;}
+.tip-reason{font-size:.78rem;color:var(--mt);margin-bottom:1.3rem;line-height:1.6;}
+.tip-actions{display:flex;gap:.65rem;justify-content:center;}
+.tip-yes{padding:.65rem 1.7rem;background:var(--ac);color:#0d0d0d;border:none;border-radius:50px;font-family:'DM Sans',sans-serif;font-size:.82rem;font-weight:500;cursor:pointer;transition:all .2s;}
+.tip-yes:hover{background:var(--acd);}
+.tip-no{padding:.65rem 1.7rem;background:transparent;border:1px solid var(--bd2);border-radius:50px;color:var(--tx);font-family:'DM Sans',sans-serif;font-size:.82rem;cursor:pointer;transition:all .2s;}
+.tip-no:hover{border-color:var(--ac);color:var(--ac);}
+.tip-spin{width:26px;height:26px;border:2px solid var(--bd);border-top-color:var(--ac);border-radius:50%;animation:spin .7s linear infinite;margin:.4rem auto;}
+.tip-browse{background:none;border:none;color:var(--mt);font-size:.72rem;cursor:pointer;font-family:'DM Sans',sans-serif;margin-top:.2rem;letter-spacing:1px;}
+.tip-browse:hover{color:var(--ac);}
+
+/* ── wardrobe chips ── */
+.wchips{display:flex;flex-wrap:wrap;gap:.35rem;width:100%;margin-top:.8rem;}
+.wchip{padding:.24rem .62rem;background:var(--ac2);border:1px solid var(--ac3);border-radius:50px;font-size:.68rem;color:var(--ac);cursor:pointer;transition:all .18s;}
+.wchip:hover{background:rgba(200,240,100,0.18);}
+
+/* ── layering display ── */
+.layer-preview{position:relative;width:80px;height:80px;margin:0 auto .5rem;flex-shrink:0;}
+.layer-preview .l-base{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:2.2rem;}
+.layer-preview .l-top{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:1.8rem;transform:translate(8px,8px);}
+
+/* ── loading ── */
+#page-loading .sbody{gap:1.4rem;text-align:center;}
+.spinner{width:44px;height:44px;border:2px solid var(--bd);border-top-color:var(--ac);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto;}
+.llabel{font-family:'Bebas Neue',sans-serif;font-size:1.65rem;letter-spacing:3px;color:var(--ac);}
+.lsub{font-size:.82rem;color:var(--mt);}
+
+/* ── result ── */
+#page-result{padding:0;padding-bottom:72px;}
+.rhdr{padding:1.1rem 2rem;border-bottom:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-shrink:0;}
+.rhdr .logo{font-size:1.4rem;}
+.racts{display:flex;gap:.5rem;flex-wrap:wrap;}
+.rbody{display:grid;grid-template-columns:1fr 1.2fr;min-height:calc(100vh - 70px - 72px);}
+@media(max-width:660px){.rbody{grid-template-columns:1fr;}}
+.rvis{background:var(--s1);border-right:1px solid var(--bd);padding:1.7rem;display:flex;flex-direction:column;gap:.85rem;}
+.vlabel{font-size:.63rem;letter-spacing:3px;text-transform:uppercase;color:var(--mt);}
+.otitle{font-family:'Bebas Neue',sans-serif;font-size:1.75rem;letter-spacing:3px;color:var(--ac);}
+.ctabs{display:flex;gap:.36rem;flex-wrap:wrap;}
+.ctab{padding:.3rem .82rem;border-radius:50px;font-size:.7rem;cursor:pointer;border:1px solid var(--bd);background:transparent;color:var(--mt);font-family:'DM Sans',sans-serif;transition:all .2s;}
+.ctab.active,.ctab:hover{border-color:var(--ac);color:var(--ac);background:var(--ac2);}
+.opieces{display:flex;flex-direction:column;gap:.48rem;flex:1;}
+
+/* piece card with layering */
+.pcard{background:var(--s2);border:1px solid var(--bd);border-radius:10px;padding:.78rem .92rem;display:flex;align-items:center;gap:.82rem;transition:border-color .2s;}
+.pcard:hover{border-color:var(--ac3);}
+.pcard.layered{border-color:var(--ac3);background:linear-gradient(135deg,var(--s2),rgba(200,240,100,0.04));}
+.picon-wrap{position:relative;flex-shrink:0;width:38px;height:38px;}
+.picon{font-size:1.3rem;line-height:1;}
+.picon-layer{position:absolute;top:6px;left:6px;font-size:1rem;opacity:.75;}
+.pinfo{flex:1;min-width:0;}
+.ptype{font-size:.6rem;letter-spacing:2px;text-transform:uppercase;color:var(--mt);}
+.pname{font-size:.86rem;margin-top:.08rem;}
+.pdetail{font-size:.68rem;color:var(--ac);margin-top:.07rem;}
+.player-tag{display:inline-block;font-size:.6rem;color:var(--ac);border:1px solid var(--ac3);border-radius:50px;padding:.1rem .45rem;margin-top:.2rem;letter-spacing:.5px;}
+.pswap{padding:.24rem .58rem;background:transparent;border:1px solid var(--bd);border-radius:50px;color:var(--mt);font-size:.64rem;cursor:pointer;font-family:'DM Sans',sans-serif;flex-shrink:0;transition:all .2s;}
+.pswap:hover{border-color:var(--ac);color:var(--ac);}
+
+.rdet{padding:1.7rem;overflow-y:auto;}
+.dsec{margin-bottom:1.55rem;}
+.dslabel{font-size:.63rem;letter-spacing:3px;text-transform:uppercase;color:var(--mt);margin-bottom:.58rem;}
+.vtags{display:flex;flex-wrap:wrap;gap:.36rem;}
+.vtag{padding:.25rem .7rem;background:var(--ac2);border:1px solid var(--ac3);border-radius:50px;font-size:.7rem;color:var(--ac);}
+#ai-desc{font-size:.85rem;line-height:1.8;color:#ccc;}
+#ai-tips{font-size:.8rem;line-height:1.8;color:#ccc;}
+#ai-tips li{margin-bottom:.3rem;padding-left:.4rem;list-style:none;}
+#ai-tips li::before{content:'→  ';color:var(--ac);}
+.sbar{background:var(--s1);border:1px solid var(--bd);border-radius:50px;padding:.4rem 1rem;display:flex;align-items:center;gap:.4rem;flex-wrap:wrap;justify-content:center;margin-top:1.3rem;font-size:.71rem;color:var(--mt);}
+.si{color:var(--tx);}
+.sd{color:var(--bd2);}
+
+/* ── swap modal ── */
+.movl{position:fixed;inset:0;background:rgba(0,0,0,.82);z-index:200;display:none;align-items:center;justify-content:center;padding:1rem;}
+.movl.open{display:flex;}
+.modal{background:var(--s1);border:1px solid var(--bd);border-radius:16px;padding:1.65rem;max-width:450px;width:100%;}
+.mtitle{font-family:'Bebas Neue',sans-serif;font-size:1.3rem;letter-spacing:2px;color:var(--ac);margin-bottom:.36rem;}
+.msub{font-size:.76rem;color:var(--mt);margin-bottom:1.1rem;line-height:1.5;}
+.minput{width:100%;background:var(--s2);border:1px solid var(--bd);border-radius:8px;padding:.7rem .95rem;color:var(--tx);font-family:'DM Sans',sans-serif;font-size:.84rem;outline:none;transition:border-color .2s;margin-bottom:.85rem;}
+.minput:focus{border-color:var(--ac);}
+.macts{display:flex;gap:.58rem;justify-content:flex-end;}
+#swap-loading{display:none;font-size:.76rem;color:var(--mt);text-align:center;padding:.65rem 0;}
+
+/* ── chatbot ── */
+.chat-bar{position:fixed;bottom:0;left:0;right:0;z-index:150;background:var(--s1);border-top:1px solid var(--bd);transition:height .3s ease;}
+.chat-bar.collapsed{height:52px;overflow:hidden;}
+.chat-bar.expanded{height:360px;}
+.chat-toggle{width:100%;padding:.9rem 2rem;display:flex;align-items:center;justify-content:space-between;cursor:pointer;background:none;border:none;color:var(--tx);font-family:'DM Sans',sans-serif;}
+.chat-toggle-left{display:flex;align-items:center;gap:.6rem;}
+.chat-dot{width:7px;height:7px;border-radius:50%;background:var(--ac);animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.4;}}
+.chat-label{font-size:.78rem;letter-spacing:1px;color:var(--ac);font-weight:500;}
+.chat-arrow{font-size:.7rem;color:var(--mt);transition:transform .3s;}
+.chat-bar.expanded .chat-arrow{transform:rotate(180deg);}
+.chat-body{display:flex;flex-direction:column;height:calc(360px - 52px);padding:0 1rem .8rem;}
+.chat-msgs{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:.55rem;padding:.5rem 0;}
+.chat-msgs::-webkit-scrollbar{width:3px;}
+.chat-msgs::-webkit-scrollbar-track{background:transparent;}
+.chat-msgs::-webkit-scrollbar-thumb{background:var(--bd2);border-radius:3px;}
+.cmsg{max-width:82%;padding:.55rem .85rem;border-radius:10px;font-size:.8rem;line-height:1.65;}
+.cmsg.user{align-self:flex-end;background:var(--ac2);border:1px solid var(--ac3);color:var(--tx);}
+.cmsg.bot{align-self:flex-start;background:var(--s2);border:1px solid var(--bd);color:#ccc;}
+.cmsg.bot.typing{color:var(--mt);}
+.chat-input-row{display:flex;gap:.5rem;align-items:center;}
+.chat-inp{flex:1;background:var(--s2);border:1px solid var(--bd);border-radius:50px;padding:.55rem 1rem;color:var(--tx);font-family:'DM Sans',sans-serif;font-size:.8rem;outline:none;transition:border-color .2s;}
+.chat-inp:focus{border-color:var(--ac);}
+.chat-send{width:34px;height:34px;border-radius:50%;background:var(--ac);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .2s;}
+.chat-send:hover{background:var(--acd);}
+.chat-send svg{width:14px;height:14px;}
+
+/* ── intro ── */
+#page-intro .sbody{text-align:center;}
+.ihead{font-family:'Bebas Neue',sans-serif;font-size:clamp(3rem,10vw,6rem);letter-spacing:4px;line-height:.95;margin-bottom:1.25rem;}
+.ihead span{color:var(--ac);}
+.isub{font-size:.9rem;color:var(--mt);max-width:340px;margin:0 auto 2rem;line-height:1.7;}
+.sbtn{padding:.9rem 2.6rem;background:var(--ac);color:#0d0d0d;border:none;border-radius:50px;font-family:'DM Sans',sans-serif;font-size:.92rem;font-weight:500;cursor:pointer;letter-spacing:1px;transition:all .2s;}
+.sbtn:hover{background:var(--acd);transform:scale(1.03);}
+.spills{display:flex;gap:.42rem;justify-content:center;margin-bottom:1.7rem;flex-wrap:wrap;}
+.spill{padding:.26rem .82rem;border:1px solid var(--bd);border-radius:50px;font-size:.68rem;color:var(--mt);letter-spacing:1px;}
+
+@keyframes fi{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:none;}}
+@keyframes spin{to{transform:rotate(360deg);}}
+.fi{animation:fi .35s ease;}
+.mnote{font-size:.7rem;color:var(--mt);text-align:center;margin-bottom:1.1rem;letter-spacing:1px;}
+</style>
+</head>
+<body>
+
+<!-- ════ INTRO ════ -->
+<div class="page active" id="page-intro">
+  <header><div class="logo">DRIP</div><div class="step-ind">AI OUTFIT ADVISOR</div></header>
+  <div class="sbody fi">
+    <p class="qlabel">Welcome to</p>
+    <h1 class="ihead">YOUR PERFECT<br><span>OUTFIT</span><br>STARTS HERE</h1>
+    <div class="spills">
+      <span class="spill">OCCASION</span><span class="spill">MOOD</span>
+      <span class="spill">WEATHER</span><span class="spill">AESTHETIC</span><span class="spill">WARDROBE</span>
+    </div>
+    <p class="isub">5 quick steps. AI builds your exact outfit from what you own — weather-aware, India-ready.</p>
+    <button class="sbtn" id="start-btn">Let's style me →</button>
+  </div>
+</div>
+
+<!-- ════ OCCASION ════ -->
+<div class="page" id="page-occasion">
+  <header><div class="logo">DRIP</div><div class="step-ind">1 OF 5 — OCCASION</div></header>
+  <div class="pbar"><div class="pfill" style="width:20%"></div></div>
+  <div class="sbody fi">
+    <p class="qlabel">Occasion</p>
+    <h2 class="qtxt">WHERE ARE YOU HEADING?</h2>
+    <div class="ogrid wide" id="occ-grid"></div>
+  </div>
+</div>
+
+<!-- ════ MOOD ════ -->
+<div class="page" id="page-mood">
+  <header><div class="logo">DRIP</div><div class="step-ind">2 OF 5 — MOOD</div></header>
+  <div class="pbar"><div class="pfill" style="width:40%"></div></div>
+  <div class="sbody fi">
+    <p class="qlabel">Mood</p>
+    <h2 class="qtxt">HOW ARE YOU FEELING?</h2>
+    <div class="ogrid" id="mood-grid"></div>
+  </div>
+</div>
+
+<!-- ════ WEATHER ════ -->
+<div class="page" id="page-weather">
+  <header><div class="logo">DRIP</div><div class="step-ind">3 OF 5 — WEATHER</div></header>
+  <div class="pbar"><div class="pfill" style="width:60%"></div></div>
+  <div class="sbody fi">
+    <p class="qlabel">Weather</p>
+    <h2 class="qtxt">WHAT'S IT LIKE OUTSIDE?</h2>
+    <div class="ogrid" id="wthr-grid"></div>
+  </div>
+</div>
+
+<!-- ════ AESTHETIC ════ -->
+<div class="page" id="page-look">
+  <header><div class="logo">DRIP</div><div class="step-ind">4 OF 5 — AESTHETIC</div></header>
+  <div class="pbar"><div class="pfill" style="width:80%"></div></div>
+  <div class="sbody fi">
+    <p class="qlabel">Aesthetic</p>
+    <h2 class="qtxt">WHAT'S YOUR DESIRED LOOK?</h2>
+    <div class="ogrid" id="look-grid"></div>
+  </div>
+</div>
+
+<!-- ════ WARDROBE ════ -->
+<div class="page" id="page-clothes">
+  <header><div class="logo">DRIP</div><div class="step-ind" id="cl-lbl">5 OF 5 — WARDROBE</div></header>
+  <div class="pbar"><div class="pfill" style="width:100%"></div></div>
+  <div class="sbody fi" id="cl-body">
+
+    <!-- Suggestion flow -->
+    <div id="cl-suggest" style="display:none;flex-direction:column;align-items:center;width:100%;">
+      <p class="qlabel">AI STYLIST SUGGESTS</p>
+      <div class="tip-wrap">
+        <div class="tip-card" id="tip-card">
+          <div class="tip-spin" id="tip-spin"></div>
+          <div id="tip-content" style="display:none">
+            <div class="tip-emoji" id="tip-emoji">👕</div>
+            <div class="tip-q" id="tip-q">DO YOU HAVE THIS?</div>
+            <div class="tip-reason" id="tip-reason">Loading...</div>
+            <div class="tip-actions">
+              <button class="tip-yes" id="tip-yes-btn">Yes, I have it</button>
+              <button class="tip-no" id="tip-no-btn">Nope, skip</button>
+            </div>
+          </div>
+        </div>
+        <button class="tip-browse" id="tip-browse-btn">→ Browse wardrobe myself</button>
+        <div class="wchips" id="suggest-chips"></div>
+        <button class="nbtn" id="suggest-done-btn" style="display:none">Build my outfit →</button>
+      </div>
+    </div>
+
+    <!-- Manual grid -->
+    <div id="cl-main" style="display:none;flex-direction:column;align-items:center;width:100%;">
+      <p class="qlabel">Wardrobe</p>
+      <h2 class="qtxt" style="margin-bottom:.8rem">WHAT DO YOU HAVE?</h2>
+      <p class="mnote">SELECT ITEMS — ADD COLOR, FIT & DESIGN FOR EACH</p>
+      <div class="ogrid" id="cl-grid"></div>
+      <div class="wchips" id="cl-chips"></div>
+      <button class="nbtn" id="cl-done-btn" style="display:none">Build my outfit →</button>
+    </div>
+
+    <!-- Edit panel -->
+    <div class="sspanel" id="ss-edit">
+      <button class="ssback" id="ss-back-btn">← Back</button>
+      <p class="sstitle" id="ss-name">ITEM</p>
+      <p class="sssub" id="ss-hint">Pick colors, fit and design details</p>
+
+      <div class="csec" style="max-width:560px;width:100%">
+        <p class="sec-lbl">COLORS <span style="color:var(--ac);font-size:.62rem">(UP TO 3)</span></p>
+        <div class="cdots" id="item-dots"></div>
+        <div class="sel-colors" id="sel-colors"></div>
+      </div>
+
+      <div class="csec" style="max-width:560px;width:100%">
+        <p class="sec-lbl">PATTERN / DESIGN <span style="color:var(--mt);font-size:.6rem">(OPTIONAL)</span></p>
+        <div class="dtags" id="item-patterns"></div>
+      </div>
+
+      <div class="csec" id="fit-sec" style="max-width:560px;width:100%">
+        <p class="sec-lbl">FIT</p>
+        <div class="ogrid slim" id="item-fits"></div>
+      </div>
+
+      <div class="csec" id="detail-sec" style="max-width:560px;width:100%">
+        <p class="sec-lbl">DETAILS <span style="color:var(--mt);font-size:.6rem">(OPTIONAL)</span></p>
+        <div class="dtags" id="item-details"></div>
+      </div>
+
+      <div class="csec" id="layer-sec" style="max-width:560px;width:100%;display:none">
+        <p class="sec-lbl">LAYERING <span style="color:var(--mt);font-size:.6rem">(OPTIONAL)</span></p>
+        <p style="font-size:.72rem;color:var(--mt);margin-bottom:.6rem">Is this worn layered over another item?</p>
+        <div class="dtags" id="item-layers"></div>
+      </div>
+
+      <button class="nbtn" id="edit-confirm-btn" style="margin-top:.4rem">Add to wardrobe ✓</button>
+    </div>
+
+  </div>
+</div>
+
+<!-- ════ LOADING ════ -->
+<div class="page" id="page-loading">
+  <header><div class="logo">DRIP</div><div class="step-ind">BUILDING YOUR LOOK</div></header>
+  <div class="sbody" style="gap:1.4rem;text-align:center">
+    <div class="spinner"></div>
+    <p class="llabel">STYLING YOU UP</p>
+    <p class="lsub" id="loading-msg">Analyzing your wardrobe...</p>
+  </div>
+</div>
+
+<!-- ════ RESULT ════ -->
+<div class="page" id="page-result">
+  <div class="rhdr">
+    <div class="logo">DRIP</div>
+    <div class="racts">
+      <button class="oblank" id="regen-btn">↻ New combo</button>
+      <button class="oblank" onclick="location.reload()">Start over</button>
+    </div>
+  </div>
+  <div class="rbody">
+    <div class="rvis">
+      <div><p class="vlabel">Your outfit</p><h2 class="otitle" id="outfit-name">—</h2></div>
+      <div class="ctabs" id="combo-tabs"></div>
+      <div class="opieces" id="outfit-pieces"></div>
+    </div>
+    <div class="rdet">
+      <div class="dsec"><p class="dslabel">Vibe Tags</p><div class="vtags" id="vibe-tags"></div></div>
+      <div class="dsec"><p class="dslabel">Why This Works</p><p id="ai-desc">—</p></div>
+      <div class="dsec"><p class="dslabel">Styling Tips</p><ul id="ai-tips"></ul></div>
+      <div class="sbar" id="sum-bar"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ════ SWAP MODAL ════ -->
+<div class="movl" id="swap-modal">
+  <div class="modal">
+    <h3 class="mtitle">SWAP PIECE</h3>
+    <p class="msub" id="swap-ctx">Describe what you have instead.</p>
+    <input class="minput" id="swap-input" placeholder="e.g. Navy linen shirt..." />
+    <div id="swap-loading">Finding the best alternative...</div>
+    <div class="macts">
+      <button class="oblank" id="swap-cancel-btn">Cancel</button>
+      <button class="osolid" id="swap-confirm-btn">Swap it →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════ CHATBOT ════ -->
+<div class="chat-bar collapsed" id="chat-bar">
+  <button class="chat-toggle" id="chat-toggle">
+    <div class="chat-toggle-left">
+      <div class="chat-dot"></div>
+      <span class="chat-label">ASK YOUR STYLIST</span>
+    </div>
+    <span class="chat-arrow">▲</span>
+  </button>
+  <div class="chat-body">
+    <div class="chat-msgs" id="chat-msgs">
+      <div class="cmsg bot">Hey! I'm your personal stylist. Ask me anything about outfits, styling, colors, trends — I'm here to help you look your best. 🔥</div>
+    </div>
+    <div class="chat-input-row">
+      <input class="chat-inp" id="chat-inp" placeholder="Ask your stylist..." />
+      <button class="chat-send" id="chat-send-btn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#0d0d0d" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="22" y1="2" x2="11" y2="13"></line>
+          <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+        </svg>
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════
+// DATA
+// ═══════════════════════════════════════════════
+const OCCASIONS = [
+  {emoji:'🏫',label:'College / School',sub:'Classes & campus'},
+  {emoji:'💼',label:'Office',sub:'Work & meetings'},
+  {emoji:'🎉',label:'Party',sub:'Get-togethers'},
+  {emoji:'🌅',label:'Morning Date',sub:'Brunch, café, walk'},
+  {emoji:'🍽️',label:'Evening Date',sub:'Dinner & romance'},
+  {emoji:'🌃',label:'Night Out',sub:'Clubs & bars'},
+  {emoji:'🛍️',label:'Mall / Shopping',sub:'Casual outing'},
+  {emoji:'🏋️',label:'Gym / Sports',sub:'Workout session'},
+  {emoji:'🎬',label:'Movie Night',sub:'Cinema or Netflix'},
+  {emoji:'🌿',label:'Picnic / Park',sub:'Outdoor hangout'},
+  {emoji:'✈️',label:'Travel',sub:'Airport & transit'},
+  {emoji:'💒',label:'Wedding',sub:'Ceremonies & receptions'},
+  {emoji:'🎓',label:'Graduation',sub:'Convocation'},
+  {emoji:'🏡',label:'Staying Home',sub:'Chilling indoors'},
+  {emoji:'☕',label:'Café / Brunch',sub:'Chill morning'},
+  {emoji:'🎨',label:'Art / Exhibition',sub:'Shows & galleries'},
+  {emoji:'🕌',label:'Religious Event',sub:'Temple / Mosque / Church'},
+  {emoji:'👨‍👩‍👧',label:'Family Function',sub:'Relatives & gatherings'},
+  {emoji:'🏖️',label:'Beach / Resort',sub:'Vacation vibes'},
+];
+const MOODS = [
+  {emoji:'😎',label:'Confident'},{emoji:'😴',label:'Low-key & lazy'},
+  {emoji:'🔥',label:'Bold & loud'},{emoji:'🌸',label:'Soft & romantic'},
+  {emoji:'😤',label:'Boss mode'},{emoji:'🌊',label:'Chill & free'},
+  {emoji:'🎭',label:'Dramatic'},{emoji:'🧘',label:'Peaceful'},
+];
+const WEATHER_OPTS = [
+  {emoji:'🌞',label:'Hot & sunny',sub:'35°C+, peak summer',key:'hot'},
+  {emoji:'🌤️',label:'Warm & humid',sub:'28–35°C',key:'warm'},
+  {emoji:'😊',label:'Pleasant',sub:'22–28°C, light breeze',key:'pleasant'},
+  {emoji:'🌧️',label:'Monsoon / Rainy',sub:'Wet & muggy',key:'rain'},
+  {emoji:'🌬️',label:'Cool & windy',sub:'15–22°C',key:'cool'},
+  {emoji:'❄️',label:'Cold',sub:'Under 15°C, north India winters',key:'cold'},
+];
+const LOOKS = [
+  {emoji:'🖤',label:'Streetwear'},{emoji:'👔',label:'Smart Casual'},
+  {emoji:'🤌',label:'Minimalist'},{emoji:'✨',label:'Trendy / OOTD'},
+  {emoji:'💫',label:'Y2K'},{emoji:'🎽',label:'Athleisure'},
+  {emoji:'🌙',label:'Dark Academia'},{emoji:'🌺',label:'Boho / Ethnic'},
+  {emoji:'👑',label:'Luxe / Formal'},{emoji:'🏕️',label:'Cottagecore'},
+];
+const CATALOG = [
+  {emoji:'👕',label:'T-shirt',cat:'tops',
+   fits:['Slim fit','Regular fit','Oversized','Boxy'],
+   colors:['White','Black','Grey','Navy','Beige','Cream','Olive','Sage green','Dusty pink','Burgundy','Sky blue','Mint','Charcoal','Rust','Yellow','Orange','Red','Purple','Teal'],
+   patterns:['Solid','Graphic / Print','Striped','Tie-dye','Text / Slogan'],
+   details:['Washed / Faded','Distressed','Cropped','Pocket tee'],
+   canLayerUnder:['Jacket / Blazer','Hoodie / Sweatshirt','Shacket / Overshirt','Sweater / Cardigan','Floral Shirt'],
+   hot:1,warm:1,pleasant:1,rain:1,cool:0,cold:0},
+  {emoji:'👔',label:'Formal Shirt',cat:'tops',
+   fits:['Slim fit','Regular fit','Relaxed / Oversized'],
+   colors:['White','Light blue','Pale pink','Lavender','Mint','Beige','Black','Navy','Grey','Light yellow','Sage'],
+   patterns:['Solid','Striped','Checked / Plaid','Linen texture','Micro-print'],
+   details:['Tucked','Half-tucked','Sleeves rolled','French tuck','Open over tee'],
+   canLayerUnder:['Jacket / Blazer','Shacket / Overshirt'],
+   hot:1,warm:1,pleasant:1,rain:1,cool:1,cold:1},
+  {emoji:'🌺',label:'Floral Shirt',cat:'tops',
+   fits:['Slim fit','Regular fit','Relaxed / Oversized'],
+   colors:['White base','Black base','Beige base','Blue base','Cream base','Pink base'],
+   patterns:['Tropical floral','Rose floral','Vintage floral','Abstract floral','Pastel floral','Bold / Dark floral'],
+   details:['Tucked','Half-tucked','Open over tee','Short sleeve','Full sleeve'],
+   canLayerUnder:['Jacket / Blazer'],
+   hot:1,warm:1,pleasant:1,rain:0,cool:0,cold:0},
+  {emoji:'🎽',label:'Polo / Collar Tee',cat:'tops',
+   fits:['Slim fit','Regular fit'],
+   colors:['White','Black','Navy','Forest green','Burgundy','Grey','Beige','Yellow','Sky blue'],
+   patterns:['Solid','Striped collar','Pique texture'],
+   details:['Cropped','Regular length'],
+   canLayerUnder:['Jacket / Blazer'],
+   hot:1,warm:1,pleasant:1,rain:0,cool:0,cold:0},
+  {emoji:'🧵',label:'Kurta',cat:'tops',
+   fits:['Fitted','Regular','Long / Anarkali'],
+   colors:['White','Off-white','Beige','Pastel blue','Pastel pink','Mustard','Maroon','Black','Grey','Navy','Saffron','Terracotta'],
+   patterns:['Solid','Embroidered','Printed / Block print','Bandhani','Chikankari','Floral'],
+   details:['Short kurta','Long kurta','Side slits','Mandarin collar','V-neck'],
+   canLayerUnder:[],
+   hot:1,warm:1,pleasant:1,rain:1,cool:1,cold:0},
+  {emoji:'🧣',label:'Hoodie / Sweatshirt',cat:'tops',
+   fits:['Slim fit','Regular fit','Oversized'],
+   colors:['Grey','Black','White','Navy','Burgundy','Olive','Beige','Cream','Dusty pink','Brown','Charcoal'],
+   patterns:['Solid','Graphic / Logo','Embroidered logo','Washed'],
+   details:['Zip-up','Pullover','Cropped','Distressed'],
+   canLayerUnder:[],
+   layerOver:['T-shirt'],
+   hot:0,warm:0,pleasant:1,rain:0,cool:1,cold:1},
+  {emoji:'🧥',label:'Jacket / Blazer',cat:'tops',
+   fits:['Fitted','Regular','Oversized'],
+   colors:['Black','Navy','Grey','Beige / Camel','Brown','Olive','Charcoal','Cream','Burgundy'],
+   patterns:['Solid','Checked / Plaid','Striped','Textured'],
+   details:['Cropped','Long','Single-breasted','Double-breasted','Casual / Unstructured'],
+   layerOver:['T-shirt','Formal Shirt','Floral Shirt','Polo / Collar Tee'],
+   hot:0,warm:0,pleasant:1,rain:0,cool:1,cold:1},
+  {emoji:'🥼',label:'Shacket / Overshirt',cat:'tops',
+   fits:['Regular fit','Oversized'],
+   colors:['Olive','Beige','Brown','Grey','Navy','Black','Rust','Terracotta','Cream'],
+   patterns:['Solid','Flannel / Plaid','Denim','Quilted'],
+   details:['Worn open over tee','Buttoned up','Cropped'],
+   layerOver:['T-shirt','Formal Shirt'],
+   hot:0,warm:0,pleasant:1,rain:0,cool:1,cold:0},
+  {emoji:'🧤',label:'Sweater / Cardigan',cat:'tops',
+   fits:['Slim fit','Regular fit','Oversized'],
+   colors:['Cream','Beige','Grey','Black','Navy','Brown','Burgundy','Olive','Dusty pink','Camel'],
+   patterns:['Solid','Cable knit','Ribbed','Striped'],
+   details:['Cropped','Turtleneck','V-neck','Crewneck','Open-front cardigan'],
+   layerOver:['T-shirt','Formal Shirt'],
+   hot:0,warm:0,pleasant:0,rain:0,cool:1,cold:1},
+  {emoji:'🌂',label:'Raincoat / Windbreaker',cat:'tops',
+   fits:['Regular fit','Oversized'],
+   colors:['Black','Navy','Olive','Grey','Yellow','Red','Beige'],
+   patterns:['Solid','Colourblock'],
+   details:['Hooded','Without hood','Zip-up','Packable'],
+   layerOver:['T-shirt','Hoodie / Sweatshirt'],
+   hot:0,warm:0,pleasant:0,rain:1,cool:1,cold:0},
+  // Bottoms
+  {emoji:'👖',label:'Jeans',cat:'bottoms',
+   fits:['Skinny','Slim fit','Straight','Relaxed / Regular','Wide leg / Baggy','Bootcut'],
+   colors:['Light wash blue','Medium wash blue','Dark wash / Indigo','Raw denim','Black','Grey','White','Acid wash'],
+   patterns:['Solid','Distressed / Ripped','Faded','Patchwork'],
+   details:['Cuffed','Cropped','High-waist','Mid-rise','Low-rise'],
+   hot:0,warm:1,pleasant:1,rain:1,cool:1,cold:1},
+  {emoji:'🩳',label:'Shorts',cat:'bottoms',
+   fits:['Regular','Cargo','Athletic / Running','Chino'],
+   colors:['Beige','Black','Navy','Olive','Grey','White','Khaki','Light blue','Brown'],
+   patterns:['Solid','Checked','Printed','Camo'],
+   details:['Above knee','At knee','Drawstring','Belted'],
+   hot:1,warm:1,pleasant:1,rain:0,cool:0,cold:0},
+  {emoji:'👗',label:'Dress / Skirt',cat:'bottoms',
+   fits:['Mini','Midi','Maxi','A-line','Bodycon','Wrap'],
+   colors:['White','Black','Beige','Dusty pink','Navy','Sage green','Yellow','Rust','Lavender','Cream'],
+   patterns:['Solid','Floral','Printed','Striped','Polka dot'],
+   details:['Slip dress','Sundress','Shirt dress','Pleated','Ruffled'],
+   hot:1,warm:1,pleasant:1,rain:0,cool:0,cold:0},
+  {emoji:'👕',label:'Trousers / Chinos',cat:'bottoms',
+   fits:['Slim fit','Regular fit','Tapered','Wide leg'],
+   colors:['Beige / Khaki','Black','Navy','Olive','Grey','Cream','White','Brown','Camel','Terracotta'],
+   patterns:['Solid','Checked','Striped'],
+   details:['High-waist','Mid-rise','Pleated','Flat-front','Cuffed'],
+   hot:0,warm:1,pleasant:1,rain:1,cool:1,cold:1},
+  {emoji:'🩲',label:'Track / Jogger Pants',cat:'bottoms',
+   fits:['Slim fit','Regular fit','Baggy / Relaxed'],
+   colors:['Black','Grey','Navy','Beige','Olive','White','Charcoal'],
+   patterns:['Solid','Striped (side panel)','Colourblock'],
+   details:['Elasticated hem','Straight hem','Drawstring','Zip pockets'],
+   hot:0,warm:0,pleasant:1,rain:1,cool:1,cold:1},
+  {emoji:'🪡',label:'Cargo Pants',cat:'bottoms',
+   fits:['Regular fit','Baggy / Relaxed','Slim / Tapered'],
+   colors:['Olive','Black','Beige / Khaki','Grey','Navy','Brown','Cream','Camo green'],
+   patterns:['Solid','Camo','Washed'],
+   details:['Multi-pocket','Parachute style','Drawstring hem','Belted'],
+   hot:0,warm:1,pleasant:1,rain:0,cool:1,cold:0},
+  // Footwear
+  {emoji:'👟',label:'Sneakers',cat:'footwear',
+   fits:['Low-top','High-top','Chunky / Dad shoe','Slip-on','Running / Athletic'],
+   colors:['White','Black','Grey','White & Black','White & Red','White & Blue','Beige / Cream','Navy','Multi-color','Triple black','Triple white'],
+   patterns:['Solid','Two-tone','Colourblock'],
+   details:['Clean / Minimal','Retro silhouette','Platform sole'],
+   hot:1,warm:1,pleasant:1,rain:0,cool:1,cold:1},
+  {emoji:'👞',label:'Loafers / Formals',cat:'footwear',
+   fits:['Penny loafer','Tassel loafer','Oxford','Derby','Monk strap'],
+   colors:['Black','Brown','Tan / Cognac','Beige','Navy','Burgundy','White'],
+   patterns:['Solid','Brogue detail','Patent / Shiny'],
+   details:['Leather','Suede','Canvas'],
+   hot:1,warm:1,pleasant:1,rain:0,cool:1,cold:1},
+  {emoji:'🥿',label:'Sandals / Chappals',cat:'footwear',
+   fits:['Flat sandal','Slides','Sport sandal','Strappy','Kolhapuri'],
+   colors:['Black','Brown / Tan','Beige','White','Gold','Silver'],
+   patterns:['Solid','Embellished','Woven / Braided'],
+   details:['Leather','Rubber sole','Embroidered'],
+   hot:1,warm:1,pleasant:1,rain:1,cool:0,cold:0},
+  {emoji:'👡',label:'Heels',cat:'footwear',
+   fits:['Block heel','Stiletto','Kitten heel','Wedge','Platform'],
+   colors:['Black','Beige / Nude','White','Red','Brown','Gold','Silver','Navy'],
+   patterns:['Solid','Patent / Shiny','Embellished'],
+   details:['Ankle strap','Mule','Pointed toe','Round toe'],
+   hot:1,warm:1,pleasant:1,rain:0,cool:0,cold:0},
+  {emoji:'🥾',label:'Boots',cat:'footwear',
+   fits:['Ankle boot','Chelsea boot','Knee-high','Combat / Chunky','Lace-up'],
+   colors:['Black','Brown / Tan','Beige','Grey','White','Burgundy'],
+   patterns:['Solid','Distressed / Worn'],
+   details:['Leather','Suede','Platform sole','Side zip'],
+   hot:0,warm:0,pleasant:1,rain:1,cool:1,cold:1},
+  // Accessories
+  {emoji:'🎩',label:'Cap / Hat',cat:'acc',
+   fits:['Baseball cap','Snapback','Bucket hat','Beanie','Beret'],
+   colors:['Black','White','Navy','Grey','Beige','Olive','Cream','Red','Brown'],
+   patterns:['Solid','Logo / Embroidered','Striped','Camo'],
+   details:['Structured','Unstructured','Distressed'],
+   hot:1,warm:1,pleasant:1,rain:0,cool:1,cold:1},
+  {emoji:'🕶️',label:'Sunglasses',cat:'acc',
+   fits:['Wayfarer','Round','Aviator','Cat-eye','Rectangle','Oversized'],
+   colors:['Black frame','Brown / Tortoise','Gold frame','Silver frame','Clear frame'],
+   patterns:['Solid','Gradient lens','Mirrored'],
+   details:['Acetate','Metal frame'],
+   hot:1,warm:1,pleasant:1,rain:0,cool:0,cold:0},
+  {emoji:'⌚',label:'Watch',cat:'acc',
+   fits:['Sporty / Digital','Minimalist','Dress watch','Chunky / Statement'],
+   colors:['Black','Silver','Gold','Rose gold','Brown leather strap','Black rubber strap','White dial'],
+   patterns:['Solid','Two-tone'],
+   details:['Leather strap','Metal bracelet','Rubber strap','NATO strap'],
+   hot:1,warm:1,pleasant:1,rain:1,cool:1,cold:1},
+  {emoji:'💍',label:'Jewellery',cat:'acc',
+   fits:['Rings','Chain necklace','Pendant','Earrings','Bracelet','Bangles'],
+   colors:['Gold','Silver','Rose gold','Black','Pearl white','Mixed metals'],
+   patterns:['Solid','Textured','Beaded'],
+   details:['Layered','Statement piece','Minimal','Ethnic / Traditional'],
+   hot:1,warm:1,pleasant:1,rain:1,cool:1,cold:1},
+  {emoji:'👜',label:'Bag / Backpack',cat:'acc',
+   fits:['Backpack','Tote','Sling / Crossbody','Mini bag','Clutch','Duffel'],
+   colors:['Black','Brown / Tan','Beige','White','Navy','Grey','Olive','Cream'],
+   patterns:['Solid','Logo / Monogram','Textured leather'],
+   details:['Leather','Canvas','Nylon / Techwear','Woven / Rattan'],
+   hot:1,warm:1,pleasant:1,rain:1,cool:1,cold:1},
+];
+const COLOR_MAP = {
+  'White':'#f5f5f5','Black':'#1a1a1a','Grey':'#8a8a8a','Charcoal':'#3a3a3a',
+  'Navy':'#1f3a6e','Blue':'#2563eb','Sky blue':'#7bbfea','Light blue':'#aad4f5',
+  'Dark wash / Indigo':'#1e2a5e','Medium wash blue':'#4a6fa5','Light wash blue':'#8db4d8',
+  'Raw denim':'#2d4a7a','Acid wash':'#b0c4de',
+  'Green':'#16a34a','Olive':'#6b7c3e','Sage green':'#87a878','Forest green':'#1a4731',
+  'Mint':'#98d4c0','Khaki':'#c2b280','Camo green':'#4a5e3a',
+  'Red':'#dc2626','Burgundy':'#7f1d1d','Maroon':'#6b1414',
+  'Orange':'#f97316','Rust':'#c2440c','Terracotta':'#b5541e','Saffron':'#f59e0b',
+  'Yellow':'#eab308','Mustard':'#ca8a04',
+  'Purple':'#9333ea','Lavender':'#c084fc','Dusty pink':'#e8a0b4',
+  'Pale pink':'#fce7f3','Pastel pink':'#fbcfe8','Pink':'#ec4899',
+  'Brown':'#92400e','Tan / Cognac':'#b5651d','Camel':'#c19a6b',
+  'Beige':'#d4a574','Beige / Khaki':'#c9a96e','Beige / Camel':'#c19a6b',
+  'Beige / Nude':'#e8c9a0','Khaki / Olive':'#b5a642',
+  'Teal':'#0d9488','Pastel blue':'#93c5fd',
+  'Cream':'#fffdd0','Off-white':'#f8f4e8',
+  'Gold':'#d4a017','Silver':'#c0c0c0','Rose gold':'#b76e79',
+  'Brown / Tan':'#a0522d','White base':'#f8f8f0','Black base':'#181818',
+  'Blue base':'#2563eb','Pink base':'#f9a8d4','Beige base':'#e5c99a','Cream base':'#fefce8',
+  'White & Black':'#888','White & Red':'#e8a0a0','White & Blue':'#a0b8e8',
+  'Black frame':'#1a1a1a','Brown / Tortoise':'#8b4513','Gold frame':'#d4a017',
+  'Silver frame':'#c0c0c0','Clear frame':'#e0e0e0',
+  'Brown leather strap':'#8B4513','Black rubber strap':'#222',
+  'Multi-color':'#ff9933','Floral multicolor':'#e879a0',
+};
+
+// ═══════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════
+const S = { occasion:'', mood:'', weather:'', weatherKey:'', look:'', clothes:[] };
+let currentOutfit = null;
+let activeCombo = 0;
+let swapPiece = null;
+let editItem = null;
+let editColors = [];
+let editPattern = '';
+let editFit = '';
+let editDetails = [];
+let editLayerOver = '';
+let fromSuggest = false;
+let tipSuggestions = [];
+let tipIndex = 0;
+
+// ═══════════════════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════════════════
+function colorHex(name) {
+  if (COLOR_MAP[name]) return COLOR_MAP[name];
+  const k = Object.keys(COLOR_MAP).find(k =>
+    name.toLowerCase().includes(k.toLowerCase()) || k.toLowerCase().includes(name.toLowerCase())
+  );
+  return k ? COLOR_MAP[k] : '#888';
+}
+function needsBorder(hex) {
+  return ['#f5f5f5','#fffdd0','#f8f4e8','#e0e0e0','#f8f8f0','#fefce8'].includes(hex);
+}
+async function callGemini(prompt, maxTokens = 800) {
+  const r = await fetch('/api/gemini', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ prompt, maxTokens })
+  });
+  const d = await r.json();
+  if (!r.ok) throw new Error(d.error || 'API error');
+  return d.text;
+}
+
+// ═══════════════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════════════
+function goTo(page) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  const el = document.getElementById('page-' + page);
+  el.classList.add('active');
+  window.scrollTo(0, 0);
+  if (page === 'clothes') initClothes();
+  if (page === 'loading') startGen();
+}
+
+// ═══════════════════════════════════════════════
+// GRID BUILDER — single select
+// ═══════════════════════════════════════════════
+function buildGrid(containerId, items, onSelect) {
+  const grid = document.getElementById(containerId);
+  if (!grid) return;
+  grid.innerHTML = '';
+  items.forEach(function(item) {
+    const card = document.createElement('div');
+    card.className = 'ocard';
+    card.innerHTML =
+      (item.emoji ? '<span class="oemoji">' + item.emoji + '</span>' : '') +
+      '<div class="olabel">' + item.label + '</div>' +
+      (item.sub ? '<div class="osub">' + item.sub + '</div>' : '');
+    card.addEventListener('click', function() {
+      grid.querySelectorAll('.ocard').forEach(function(c) { c.classList.remove('sel'); });
+      card.classList.add('sel');
+      var captured = item;
+      setTimeout(function() { onSelect(captured); }, 280);
+    });
+    grid.appendChild(card);
+  });
+}
+
+// ═══════════════════════════════════════════════
+// INIT GRIDS — on DOMContentLoaded
+// ═══════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', function() {
+  buildGrid('occ-grid', OCCASIONS, function(item) { S.occasion = item.label; goTo('mood'); });
+  buildGrid('mood-grid', MOODS, function(item) { S.mood = item.label; goTo('weather'); });
+  buildGrid('wthr-grid', WEATHER_OPTS, function(item) { S.weather = item.label; S.weatherKey = item.key; goTo('look'); });
+  buildGrid('look-grid', LOOKS, function(item) { S.look = item.label; goTo('clothes'); });
+
+  // Buttons
+  document.getElementById('start-btn').addEventListener('click', function() { goTo('occasion'); });
+  document.getElementById('tip-yes-btn').addEventListener('click', tipYes);
+  document.getElementById('tip-no-btn').addEventListener('click', tipNo);
+  document.getElementById('tip-browse-btn').addEventListener('click', showManualGrid);
+  document.getElementById('suggest-done-btn').addEventListener('click', function() { goTo('loading'); });
+  document.getElementById('cl-done-btn').addEventListener('click', function() { goTo('loading'); });
+  document.getElementById('edit-confirm-btn').addEventListener('click', confirmEdit);
+  document.getElementById('ss-back-btn').addEventListener('click', cancelEdit);
+  document.getElementById('regen-btn').addEventListener('click', regenerate);
+  document.getElementById('swap-cancel-btn').addEventListener('click', closeModal);
+  document.getElementById('swap-confirm-btn').addEventListener('click', doSwap);
+  document.getElementById('swap-modal').addEventListener('click', function(e) { if (e.target === this) closeModal(); });
+  document.getElementById('chat-toggle').addEventListener('click', toggleChat);
+  document.getElementById('chat-send-btn').addEventListener('click', sendChat);
+  document.getElementById('chat-inp').addEventListener('keydown', function(e) { if (e.key === 'Enter') sendChat(); });
+});
+
+// ═══════════════════════════════════════════════
+// WARDROBE INIT
+// ═══════════════════════════════════════════════
+function initClothes() {
+  document.getElementById('cl-suggest').style.display = 'none';
+  document.getElementById('cl-main').style.display = 'none';
+  document.getElementById('ss-edit').classList.remove('open');
+  startSuggestions();
+}
+
+// ═══════════════════════════════════════════════
+// SUGGESTIONS
+// ═══════════════════════════════════════════════
+async function startSuggestions() {
+  document.getElementById('cl-suggest').style.display = 'flex';
+  document.getElementById('tip-spin').style.display = 'block';
+  document.getElementById('tip-content').style.display = 'none';
+  tipIndex = 0;
+
+  try {
+    const prompt =
+      'You are a fashion stylist. Occasion: ' + S.occasion +
+      ', Mood: ' + S.mood +
+      ', Weather: ' + S.weather +
+      ', Aesthetic: ' + S.look + '.\n\n' +
+      'Suggest 8 specific clothing items that work together for this look, in order: tops first, then bottoms, shoes, then accessories.\n' +
+      'Return ONLY a JSON array, no markdown:\n' +
+      '[{"emoji":"👕","type":"T-shirt","desc":"Oversized White T-shirt","reason":"One sentence why it works."},...]\n' +
+      'No other text, no backticks.';
+    const raw = await callGemini(prompt, 600);
+    const cleaned = raw.replace(/```json|```/g, '').trim();
+    tipSuggestions = JSON.parse(cleaned);
+  } catch(e) {
+    tipSuggestions = getSmartDefaults();
+  }
+  showTip();
+}
+
+function getSmartDefaults() {
+  const wk = S.weatherKey;
+  const occ = S.occasion.toLowerCase();
+  var base = [
+    {emoji:'👕',type:'T-shirt',desc:'T-shirt',reason:'Versatile base for almost any look.'},
+    {emoji:'👖',type:'Jeans',desc:'Jeans',reason:'Timeless bottoms that work with everything.'},
+    {emoji:'👟',type:'Sneakers',desc:'Sneakers',reason:'Clean footwear that elevates any outfit.'},
+    {emoji:'⌚',type:'Watch',desc:'Watch',reason:'Adds polish and completes the look.'},
+    {emoji:'👜',type:'Bag',desc:'Bag / Backpack',reason:'Practical and stylish carry option.'},
+    {emoji:'🕶️',type:'Sunglasses',desc:'Sunglasses',reason:'Instantly elevates the outfit.'},
+    {emoji:'💍',type:'Jewellery',desc:'Minimal jewellery',reason:'Subtle finishing touch.'},
+    {emoji:'🎩',type:'Cap',desc:'Cap',reason:'Adds a casual edge.'},
+  ];
+  if (wk === 'cold') base.splice(2, 0, {emoji:'🧣',type:'Hoodie',desc:'Hoodie',reason:'Essential layer for cold weather.'});
+  if (wk === 'hot' || wk === 'warm') base[1] = {emoji:'🩳',type:'Shorts',desc:'Shorts',reason:'Stay cool in warm weather.'};
+  if (occ.includes('office') || occ.includes('formal')) {
+    base[0] = {emoji:'👔',type:'Formal Shirt',desc:'Formal Shirt',reason:'Professional and polished.'};
+    base[1] = {emoji:'👕',type:'Trousers',desc:'Trousers',reason:'Tailored bottoms for office.'};
+  }
+  return base.slice(0, 8);
+}
+
+function showTip() {
+  document.getElementById('tip-spin').style.display = 'none';
+  document.getElementById('tip-content').style.display = 'block';
+  if (tipIndex >= tipSuggestions.length) {
+    document.getElementById('tip-card').innerHTML =
+      '<div style="padding:.5rem 0">' +
+      '<div style="font-size:1.8rem;margin-bottom:.6rem">✅</div>' +
+      '<div class="tip-q" style="font-size:1.2rem">ALL DONE!</div>' +
+      '<div class="tip-reason">Browse the grid to add more items if you want.</div>' +
+      '<button class="tip-yes" onclick="showManualGrid()" style="margin-top:.7rem">Browse more</button>' +
+      '</div>';
+    return;
+  }
+  var t = tipSuggestions[tipIndex];
+  document.getElementById('tip-emoji').textContent = t.emoji;
+  document.getElementById('tip-q').textContent = 'DO YOU HAVE A ' + t.desc.toUpperCase() + '?';
+  document.getElementById('tip-reason').textContent = t.reason;
+  updateChips('suggest-chips');
+  if (S.clothes.length > 0) document.getElementById('suggest-done-btn').style.display = 'block';
+}
+
+function tipYes() {
+  var t = tipSuggestions[tipIndex];
+  var catItem = CATALOG.find(function(c) {
+    return c.label.toLowerCase().includes(t.type.toLowerCase()) ||
+           t.type.toLowerCase().includes(c.label.toLowerCase());
+  }) || CATALOG[0];
+  fromSuggest = true;
+  openEdit(catItem, t.desc);
+}
+
+function tipNo() {
+  tipIndex++;
+  document.getElementById('tip-spin').style.display = 'block';
+  document.getElementById('tip-content').style.display = 'none';
+  setTimeout(showTip, 350);
+}
+
+function showManualGrid() {
+  document.getElementById('cl-suggest').style.display = 'none';
+  document.getElementById('cl-main').style.display = 'flex';
+  buildClothesGrid();
+}
+
+// ═══════════════════════════════════════════════
+// MANUAL CLOTHES GRID
+// ═══════════════════════════════════════════════
+function buildClothesGrid() {
+  var wk = S.weatherKey || 'pleasant';
+  var filtered = CATALOG.filter(function(c) { return c[wk]; });
+  var grid = document.getElementById('cl-grid');
+  grid.innerHTML = '';
+  filtered.forEach(function(item) {
+    var card = document.createElement('div');
+    card.className = 'ocard';
+    var count = S.clothes.filter(function(c) { return c.label === item.label; }).length;
+    card.innerHTML =
+      '<span class="oemoji">' + item.emoji + '</span>' +
+      '<div class="olabel">' + item.label + '</div>' +
+      (count > 0 ? '<div class="osub" style="color:var(--ac)">' + count + ' added</div>' : '');
+    card.addEventListener('click', function() {
+      fromSuggest = false;
+      openEdit(item, '');
+    });
+    grid.appendChild(card);
+  });
+  updateChips('cl-chips');
+  document.getElementById('cl-done-btn').style.display = S.clothes.length > 0 ? 'block' : 'none';
+}
+
+function updateChips(containerId) {
+  var el = document.getElementById(containerId);
+  if (!el) return;
+  el.innerHTML = S.clothes.map(function(c) {
+    return '<span class="wchip" data-id="' + c.id + '">' +
+      c.emoji + ' ' + c.colorStr + ' ' + c.label +
+      (c.fit ? ' (' + c.fit + ')' : '') + ' ✕</span>';
+  }).join('');
+  el.querySelectorAll('.wchip').forEach(function(chip) {
+    chip.addEventListener('click', function() {
+      removeClothes(chip.dataset.id);
+    });
+  });
+}
+
+function removeClothes(id) {
+  S.clothes = S.clothes.filter(function(c) { return c.id !== id; });
+  updateChips('suggest-chips');
+  updateChips('cl-chips');
+  if (document.getElementById('cl-main').style.display !== 'none') buildClothesGrid();
+  var doneVisible = S.clothes.length > 0;
+  document.getElementById('suggest-done-btn').style.display = doneVisible ? 'block' : 'none';
+  document.getElementById('cl-done-btn').style.display = doneVisible ? 'block' : 'none';
+}
+
+// ═══════════════════════════════════════════════
+// EDIT PANEL
+// ═══════════════════════════════════════════════
+function openEdit(item, prefill) {
+  editItem = item;
+  editColors = [];
+  editPattern = '';
+  editFit = '';
+  editDetails = [];
+  editLayerOver = '';
+
+  document.getElementById('cl-suggest').style.display = 'none';
+  document.getElementById('cl-main').style.display = 'none';
+  document.getElementById('ss-edit').classList.add('open');
+  document.getElementById('ss-name').textContent = item.label.toUpperCase();
+  document.getElementById('ss-hint').textContent = prefill ? 'Suggested: ' + prefill : 'Pick colors, fit and design details';
+
+  // Colors
+  var dots = document.getElementById('item-dots');
+  dots.innerHTML = (item.colors || []).map(function(c) {
+    var hex = colorHex(c);
+    return '<div class="cdot" style="background:' + hex + ';' + (needsBorder(hex) ? 'border-color:#555;' : '') + '" title="' + c + '" data-name="' + c + '"></div>';
+  }).join('');
+  dots.querySelectorAll('.cdot').forEach(function(dot) {
+    dot.addEventListener('click', function() { toggleColor(dot.getAttribute('data-name'), dot); });
+  });
+  document.getElementById('sel-colors').innerHTML = '';
+
+  // Patterns
+  var pg = document.getElementById('item-patterns');
+  pg.innerHTML = (item.patterns || []).map(function(p) {
+    return '<div class="dtag" data-val="' + p + '">' + p + '</div>';
+  }).join('');
+  pg.querySelectorAll('.dtag').forEach(function(tag) {
+    tag.addEventListener('click', function() { togglePattern(tag.getAttribute('data-val'), tag); });
+  });
+
+  // Fits
+  var fsec = document.getElementById('fit-sec');
+  var fg = document.getElementById('item-fits');
+  if (item.fits && item.fits.length) {
+    fsec.style.display = 'block';
+    fg.innerHTML = item.fits.map(function(f) {
+      return '<div class="ocard" data-val="' + f + '"><div class="olabel" style="font-size:.74rem">' + f + '</div></div>';
+    }).join('');
+    fg.querySelectorAll('.ocard').forEach(function(card) {
+      card.addEventListener('click', function() {
+        fg.querySelectorAll('.ocard').forEach(function(c) { c.classList.remove('sel'); });
+        card.classList.add('sel');
+        editFit = card.getAttribute('data-val');
+      });
+    });
+  } else {
+    fsec.style.display = 'none';
+  }
+
+  // Details
+  var dsec = document.getElementById('detail-sec');
+  var dg = document.getElementById('item-details');
+  if (item.details && item.details.length) {
+    dsec.style.display = 'block';
+    dg.innerHTML = item.details.map(function(d) {
+      return '<div class="dtag" data-val="' + d + '">' + d + '</div>';
+    }).join('');
+    dg.querySelectorAll('.dtag').forEach(function(tag) {
+      tag.addEventListener('click', function() { toggleDetail(tag.getAttribute('data-val'), tag); });
+    });
+  } else {
+    dsec.style.display = 'none';
+  }
+
+  // Layering section
+  var lsec = document.getElementById('layer-sec');
+  var layerItems = item.layerOver || [];
+  // Also check if any added item can be layered under this
+  var addedLabels = S.clothes.map(function(c) { return c.label; });
+  var layerOptions = layerItems.filter(function(l) { return addedLabels.includes(l); });
+  if (layerOptions.length > 0) {
+    lsec.style.display = 'block';
+    var lg = document.getElementById('item-layers');
+    lg.innerHTML = layerOptions.map(function(l) {
+      return '<div class="dtag" data-val="' + l + '">Over ' + l + '</div>';
+    }).join('');
+    lg.querySelectorAll('.dtag').forEach(function(tag) {
+      tag.addEventListener('click', function() {
+        lg.querySelectorAll('.dtag').forEach(function(t) { t.classList.remove('sel'); });
+        if (editLayerOver === tag.getAttribute('data-val')) {
+          editLayerOver = '';
+        } else {
+          tag.classList.add('sel');
+          editLayerOver = tag.getAttribute('data-val');
+        }
+      });
+    });
+  } else {
+    lsec.style.display = 'none';
+  }
+}
+
+function cancelEdit() {
+  document.getElementById('ss-edit').classList.remove('open');
+  if (fromSuggest) {
+    document.getElementById('cl-suggest').style.display = 'flex';
+    tipNo();
+    tipIndex--;
+  } else {
+    document.getElementById('cl-main').style.display = 'flex';
+  }
+}
+
+function toggleColor(name, el) {
+  var idx = editColors.indexOf(name);
+  if (idx > -1) {
+    editColors.splice(idx, 1);
+    el.classList.remove('sel');
+  } else {
+    if (editColors.length >= 3) {
+      var removed = editColors.shift();
+      document.querySelectorAll('#item-dots .cdot').forEach(function(d) {
+        if (d.getAttribute('data-name') === removed) d.classList.remove('sel');
+      });
+    }
+    editColors.push(name);
+    el.classList.add('sel');
+  }
+  renderSelColors();
+}
+
+function renderSelColors() {
+  document.getElementById('sel-colors').innerHTML = editColors.map(function(c) {
+    return '<span class="ctag">' +
+      '<span class="ctag-dot" style="background:' + colorHex(c) + '"></span>' +
+      c +
+      '<span class="ctag-x" data-c="' + c + '">✕</span>' +
+      '</span>';
+  }).join('');
+  document.querySelectorAll('.ctag-x').forEach(function(x) {
+    x.addEventListener('click', function() { removeColor(x.getAttribute('data-c')); });
+  });
+}
+
+function removeColor(name) {
+  editColors = editColors.filter(function(c) { return c !== name; });
+  document.querySelectorAll('#item-dots .cdot').forEach(function(d) {
+    if (d.getAttribute('data-name') === name) d.classList.remove('sel');
+  });
+  renderSelColors();
+}
+
+function togglePattern(name, el) {
+  if (editPattern === name) {
+    editPattern = '';
+    el.classList.remove('sel');
+  } else {
+    document.querySelectorAll('#item-patterns .dtag').forEach(function(d) { d.classList.remove('sel'); });
+    editPattern = name;
+    el.classList.add('sel');
+  }
+}
+
+function toggleDetail(name, el) {
+  var idx = editDetails.indexOf(name);
+  if (idx > -1) { editDetails.splice(idx, 1); el.classList.remove('sel'); }
+  else { editDetails.push(name); el.classList.add('sel'); }
+}
+
+function confirmEdit() {
+  if (editColors.length === 0 && !editPattern) {
+    alert('Please pick at least one color or pattern.');
+    return;
+  }
+  var colorStr = editColors.length > 0 ? editColors.join(' & ') : editPattern;
+  var designStr = [editPattern].concat(editDetails).filter(Boolean).join(', ');
+  var fullDesc = colorStr +
+    (editPattern && editColors.length ? ' ' + editPattern : '') +
+    (editFit ? ' ' + editFit : '') +
+    ' ' + editItem.label +
+    (designStr ? ', ' + designStr : '');
+
+  var id = Date.now() + '_' + Math.random().toString(36).slice(2, 6);
+  S.clothes.push({
+    id: id,
+    emoji: editItem.emoji,
+    label: editItem.label,
+    cat: editItem.cat,
+    colors: editColors.slice(),
+    pattern: editPattern,
+    details: editDetails.slice(),
+    fit: editFit,
+    colorStr: colorStr,
+    designStr: designStr,
+    fullDesc: fullDesc,
+    layerOver: editLayerOver,
+  });
+
+  document.getElementById('ss-edit').classList.remove('open');
+
+  if (fromSuggest) {
+    document.getElementById('cl-suggest').style.display = 'flex';
+    updateChips('suggest-chips');
+    document.getElementById('suggest-done-btn').style.display = 'block';
+    tipIndex++;
+    document.getElementById('tip-spin').style.display = 'block';
+    document.getElementById('tip-content').style.display = 'none';
+    setTimeout(showTip, 350);
+  } else {
+    document.getElementById('cl-main').style.display = 'flex';
+    buildClothesGrid();
+  }
+}
+
+// ═══════════════════════════════════════════════
+// GENERATION
+// ═══════════════════════════════════════════════
+function startGen() {
+  var msgs = ['Analyzing your wardrobe...','Mixing and matching...','Checking vibes...','Almost ready...'];
+  var i = 0;
+  var el = document.getElementById('loading-msg');
+  var iv = setInterval(function() { el.textContent = msgs[Math.min(++i, msgs.length - 1)]; }, 1400);
+  generateOutfit()
+    .then(function(data) {
+      clearInterval(iv);
+      currentOutfit = data;
+      renderResult(data, 0);
+      goTo('result');
+    })
+    .catch(function() {
+      clearInterval(iv);
+      var fb = makeFallback();
+      currentOutfit = fb;
+      renderResult(fb, 0);
+      goTo('result');
+    });
+}
+
+function clothesStr() {
+  return S.clothes.map(function(c) {
+    return c.fullDesc + (c.layerOver ? ' [layered over ' + c.layerOver + ']' : '');
+  }).join(' | ') || 'basic wardrobe';
+}
+
+async function generateOutfit() {
+  var prompt =
+    'You are a top Indian fashion stylist. Create 3 distinct outfit combos.\n\n' +
+    'User profile:\n' +
+    '- Occasion: ' + S.occasion + '\n' +
+    '- Mood: ' + S.mood + '\n' +
+    '- Weather: ' + S.weather + ' (India)\n' +
+    '- Aesthetic: ' + S.look + '\n' +
+    '- Available items: ' + clothesStr() + '\n\n' +
+    'RULES:\n' +
+    '1. ONLY use items from the list. Never invent items.\n' +
+    '2. Use exact color and fit details.\n' +
+    '3. Each combo must be distinct.\n' +
+    '4. If an item is marked [layered over X], show it as layered in the combo.\n' +
+    '5. Weather-appropriate only.\n\n' +
+    'Return ONLY valid JSON, no markdown:\n' +
+    '{"outfitName":"2-3 word name","vibes":["tag1","tag2","tag3"],"description":"2-3 sentences.","tips":["Tip 1","Tip 2","Tip 3"],' +
+    '"combos":[{"label":"Combo A","pieces":[{"icon":"👕","type":"Top","name":"exact piece","detail":"styling note","layerOver":"item it layers over or empty string"},...]},' +
+    '{"label":"Combo B","pieces":[...]},' +
+    '{"label":"Combo C","pieces":[...]}]}';
+
+  var raw = await callGemini(prompt, 1300);
+  var cleaned = raw.replace(/```json|```/g, '').trim();
+  return JSON.parse(cleaned);
+}
+
+function makeFallback() {
+  var top = S.clothes.find(function(c) { return c.cat === 'tops'; });
+  var bot = S.clothes.find(function(c) { return c.cat === 'bottoms'; });
+  var sho = S.clothes.find(function(c) { return c.cat === 'footwear'; });
+  var acc = S.clothes.find(function(c) { return c.cat === 'acc'; });
+  function p(c, t) {
+    return c ? {icon:c.emoji,type:t,name:c.fullDesc,detail:'',layerOver:c.layerOver||''}
+             : {icon:'👕',type:t,name:'Basic piece',detail:'',layerOver:''};
+  }
+  return {
+    outfitName: 'Clean Drip',
+    vibes: [S.occasion, S.mood, S.look],
+    description: 'A solid combo for ' + S.occasion + ' that suits ' + S.weather + '. The ' + S.look + ' aesthetic shines through the pieces.',
+    tips: ['Balance your silhouette — fitted top + relaxed bottom works great', 'Match metals across accessories', 'One statement piece, keep the rest minimal'],
+    combos: [
+      {label:'Combo A',pieces:[p(top,'Top'),p(bot,'Bottom'),p(sho,'Footwear'),p(acc,'Accessory')]},
+      {label:'Combo B',pieces:[p(top,'Top'),p(bot,'Bottom'),p(sho,'Footwear'),{icon:'🕶️',type:'Accessory',name:'Sunglasses',detail:'',layerOver:''}]},
+      {label:'Combo C',pieces:[p(top,'Top'),p(bot,'Bottom'),p(sho,'Footwear'),{icon:'⌚',type:'Accessory',name:'Watch',detail:'',layerOver:''}]},
+    ]
+  };
+}
+
+// ═══════════════════════════════════════════════
+// RENDER RESULT
+// ═══════════════════════════════════════════════
+function renderResult(data, idx) {
+  activeCombo = idx;
+  document.getElementById('outfit-name').textContent = data.outfitName.toUpperCase();
+  document.getElementById('vibe-tags').innerHTML = data.vibes.map(function(v) {
+    return '<span class="vtag">' + v + '</span>';
+  }).join('');
+  document.getElementById('ai-desc').textContent = data.description;
+  document.getElementById('ai-tips').innerHTML = data.tips.map(function(t) {
+    return '<li>' + t + '</li>';
+  }).join('');
+  document.getElementById('combo-tabs').innerHTML = data.combos.map(function(c, i) {
+    return '<button class="ctab ' + (i === idx ? 'active' : '') + '" data-idx="' + i + '">' + c.label + '</button>';
+  }).join('');
+  document.querySelectorAll('.ctab').forEach(function(tab) {
+    tab.addEventListener('click', function() { switchCombo(parseInt(tab.getAttribute('data-idx'))); });
+  });
+  renderPieces(data.combos[idx].pieces);
+  document.getElementById('sum-bar').innerHTML =
+    '<span class="si">' + S.occasion + '</span><span class="sd">·</span>' +
+    '<span class="si">' + S.mood + '</span><span class="sd">·</span>' +
+    '<span class="si">' + S.weather + '</span><span class="sd">·</span>' +
+    '<span class="si">' + S.look + '</span>';
+}
+
+function renderPieces(pieces) {
+  document.getElementById('outfit-pieces').innerHTML = pieces.map(function(p, i) {
+    var isLayered = p.layerOver && p.layerOver !== '';
+    var baseItem = isLayered ? pieces.find(function(x) { return x.name.toLowerCase().includes(p.layerOver.toLowerCase()); }) : null;
+    var iconHtml = isLayered
+      ? '<div class="picon-wrap"><span class="picon" style="font-size:1.1rem">' + (baseItem ? baseItem.icon : '👕') + '</span><span class="picon-layer">' + p.icon + '</span></div>'
+      : '<div class="picon-wrap"><span class="picon">' + p.icon + '</span></div>';
+
+    return '<div class="pcard' + (isLayered ? ' layered' : '') + '" data-idx="' + i + '">' +
+      iconHtml +
+      '<div class="pinfo">' +
+        '<div class="ptype">' + p.type + '</div>' +
+        '<div class="pname">' + p.name + '</div>' +
+        (p.detail ? '<div class="pdetail">' + p.detail + '</div>' : '') +
+        (isLayered ? '<span class="player-tag">LAYERED OVER ' + p.layerOver.toUpperCase() + '</span>' : '') +
+      '</div>' +
+      '<button class="pswap" data-idx="' + i + '" data-type="' + p.type + '" data-name="' + (p.name + (p.detail ? ' — ' + p.detail : '')).replace(/"/g, '') + '">Swap</button>' +
+      '</div>';
+  }).join('');
+  document.querySelectorAll('.pswap').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      openSwap(parseInt(btn.getAttribute('data-idx')), btn.getAttribute('data-type'), btn.getAttribute('data-name'));
+    });
+  });
+}
+
+function switchCombo(idx) {
+  activeCombo = idx;
+  document.querySelectorAll('.ctab').forEach(function(t, i) { t.classList.toggle('active', i === idx); });
+  renderPieces(currentOutfit.combos[idx].pieces);
+}
+
+async function regenerate() {
+  goTo('loading');
+  document.getElementById('loading-msg').textContent = 'Cooking up a fresh look...';
+  try { currentOutfit = await generateOutfit(); }
+  catch(e) { currentOutfit = makeFallback(); }
+  renderResult(currentOutfit, 0);
+  goTo('result');
+}
+
+// ═══════════════════════════════════════════════
+// SWAP
+// ═══════════════════════════════════════════════
+function openSwap(idx, type, name) {
+  swapPiece = {idx:idx, type:type, name:name};
+  document.getElementById('swap-ctx').textContent = 'Swapping: ' + type + ' — "' + name + '". Describe what you have instead.';
+  document.getElementById('swap-input').value = '';
+  document.getElementById('swap-modal').classList.add('open');
+  document.getElementById('swap-loading').style.display = 'none';
+  document.querySelector('.macts').style.display = 'flex';
+}
+function closeModal() { document.getElementById('swap-modal').classList.remove('open'); }
+
+async function doSwap() {
+  var inp = document.getElementById('swap-input').value.trim();
+  if (!inp) return;
+  document.getElementById('swap-loading').style.display = 'block';
+  document.querySelector('.macts').style.display = 'none';
+  try {
+    var prompt =
+      'Fashion stylist swapping a piece.\n' +
+      'Original: ' + swapPiece.type + ' — "' + swapPiece.name + '"\n' +
+      'Occasion: ' + S.occasion + ', Weather: ' + S.weather + ', Look: ' + S.look + '\n' +
+      'User wants: "' + inp + '"\n' +
+      'Return ONLY JSON (no markdown): {"icon":"1 emoji","type":"' + swapPiece.type + '","name":"specific description with color","detail":"one short styling note","layerOver":""}';
+    var raw = await callGemini(prompt, 150);
+    var newP = JSON.parse(raw.replace(/```json|```/g, '').trim());
+    currentOutfit.combos[activeCombo].pieces[swapPiece.idx] = newP;
+    renderPieces(currentOutfit.combos[activeCombo].pieces);
+  } catch(e) {
+    currentOutfit.combos[activeCombo].pieces[swapPiece.idx].name = inp;
+    renderPieces(currentOutfit.combos[activeCombo].pieces);
+  }
+  document.getElementById('swap-loading').style.display = 'none';
+  document.querySelector('.macts').style.display = 'flex';
+  closeModal();
+}
+
+// ═══════════════════════════════════════════════
+// CHATBOT
+// ═══════════════════════════════════════════════
+var chatOpen = false;
+var chatHistory = [];
+
+var STYLIST_SYSTEM =
+  'You are DRIP, an expert fashion and personal styling assistant for India. ' +
+  'You ONLY answer questions about clothing, outfits, styling, fashion trends, colors, fits, accessories, and personal style. ' +
+  'If asked about anything else, politely redirect to fashion. ' +
+  'Keep every response to ONE short paragraph (max 60 words). ' +
+  'Be confident, cool, and concise. No bullet points. No lists. Just direct fashion advice.';
+
+function toggleChat() {
+  chatOpen = !chatOpen;
+  var bar = document.getElementById('chat-bar');
+  bar.className = 'chat-bar ' + (chatOpen ? 'expanded' : 'collapsed');
+  if (chatOpen) setTimeout(function() { document.getElementById('chat-inp').focus(); }, 320);
+}
+
+async function sendChat() {
+  var inp = document.getElementById('chat-inp');
+  var msg = inp.value.trim();
+  if (!msg) return;
+  inp.value = '';
+
+  appendMsg(msg, 'user');
+  chatHistory.push({role:'user', content:msg});
+
+  var typing = appendMsg('...', 'bot typing');
+
+  try {
+    var historyStr = chatHistory.slice(-6).map(function(m) {
+      return m.role.toUpperCase() + ': ' + m.content;
+    }).join('\n');
+
+    var prompt = STYLIST_SYSTEM + '\n\nConversation so far:\n' + historyStr + '\n\nRespond now as the stylist:';
+    var reply = await callGemini(prompt, 120);
+    reply = reply.trim();
+    typing.textContent = reply;
+    typing.className = 'cmsg bot';
+    chatHistory.push({role:'assistant', content:reply});
+  } catch(e) {
+    typing.textContent = "Sorry, I couldn't connect right now. Try again!";
+    typing.className = 'cmsg bot';
+  }
+  scrollChat();
+}
+
+function appendMsg(text, type) {
+  var msgs = document.getElementById('chat-msgs');
+  var div = document.createElement('div');
+  div.className = 'cmsg ' + type;
+  div.textContent = text;
+  msgs.appendChild(div);
+  scrollChat();
+  return div;
+}
+
+function scrollChat() {
+  var msgs = document.getElementById('chat-msgs');
+  msgs.scrollTop = msgs.scrollHeight;
+}
+</script>
+</body>
+</html>
