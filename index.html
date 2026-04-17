@@ -695,7 +695,7 @@ function needsBorder(hex) {
   return ['#f5f5f5','#fffdd0','#f8f4e8','#e0e0e0','#f8f8f0','#fefce8'].includes(hex);
 }
 async function callGemini(prompt, maxTokens = 800) {
-  const r = await fetch(window.location.origin + '/api/gemini', {
+  const r = await fetch("/api/gemini", {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ prompt, maxTokens })
