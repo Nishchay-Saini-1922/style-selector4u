@@ -406,13 +406,17 @@ var WEATHER_OPTS = [
 ];
 
 var LOOKS = [
-  {emoji:'🖤',label:'Streetwear'},{emoji:'👔',label:'Smart Casual'},
-  {emoji:'🤌',label:'Minimalist'},{emoji:'✨',label:'Trendy / OOTD'},
-  {emoji:'💫',label:'Y2K'},{emoji:'🎽',label:'Athleisure'},
-  {emoji:'🌙',label:'Dark Academia'},{emoji:'🌺',label:'Boho / Ethnic'},
-  {emoji:'👑',label:'Luxe / Formal'},{emoji:'🏕️',label:'Cottagecore'}
+  {emoji:'🖤', label:'Streetwear', desc:'Urban style born from skate and surf culture. Focuses on comfortable, trendy pieces like graphic tees, hoodies, and expensive sneakers.'},
+  {emoji:'👔', label:'Smart Casual', desc:'A polished everyday look that bridges the gap between formal and casual. Think blazers with jeans or neat chinos and button-downs.'},
+  {emoji:'🤌', label:'Minimalist', desc:'Centered on simplicity and neutral colors. It uses clean lines and high-quality basics to create a sleek, uncluttered, and timeless vibe.'},
+  {emoji:'✨', label:'Trendy / OOTD', desc:'Fashion-forward style that embraces the latest viral trends and social media "Outfits of the Day" with bold, boundary-pushing pieces.'},
+  {emoji:'💫', label:'Y2K', desc:'A nostalgic comeback of the early 2000s. Features playful elements like baby tees, low-rise jeans, metallics, and bright accessories.'},
+  {emoji:'🎽', label:'Athleisure', desc:'Trendy sportswear designed for both exercise and daily wear. Combines chic sweatsuits and leggings with fashionable accessories.'},
+  {emoji:'🌙', label:'Dark Academia', desc:'Inspired by classic literature and scholarly life. Features a somber, vintage-inspired palette with plaid skirts, blazers, and knits.'},
+  {emoji:'🌺', label:'Boho / Ethnic', desc:'A free-spirited style rooted in 60s and 70s fashion. Uses flowy fabrics, natural materials, and colorful, artistic prints.'},
+  {emoji:'👑', label:'Luxe / Formal', desc:'High-end, elegant attire for special occasions. Focuses on sophisticated silhouettes, tailored suits, and premium materials.'},
+  {emoji:'🏕️', label:'Cottagecore', desc:'Romanticizes a calm, rural lifestyle. Includes breezy floral dresses, puff sleeves, and earthy tones inspired by nature.'}
 ];
-
 var CATALOG = [
   {emoji:'👕',label:'T-shirt',cat:'tops',
    fits:['Slim fit','Regular fit','Oversized','Boxy'],
@@ -690,21 +694,32 @@ function buildGrid(id, items, onSelect) {
   items.forEach(function(item) {
     var card = document.createElement('div');
     card.className = 'ocard';
-    card.innerHTML =
+    
+    // Add the info button only if a description exists
+    let infoHtml = item.desc ? `
+      <div class="info-btn" tabindex="0">
+        i
+        <div class="info-tooltip">${esc(item.desc)}</div>
+      </div>
+    ` : '';
+
+    card.innerHTML = infoHtml +
       (item.emoji ? '<span class="oemoji">' + esc(item.emoji) + '</span>' : '') +
       '<div class="olabel">' + esc(item.label) + '</div>' +
       (item.sub ? '<div class="osub">' + esc(item.sub) + '</div>' : '');
-    (function(captured) {
-      card.addEventListener('click', function() {
-        grid.querySelectorAll('.ocard').forEach(function(c) { c.classList.remove('sel'); });
-        card.classList.add('sel');
-        setTimeout(function() { onSelect(captured); }, 260);
-      });
-    })(item);
+
+    card.addEventListener('click', function(e) {
+      // Don't trigger selection if the user clicked the info icon
+      if (e.target.closest('.info-btn')) return; 
+      
+      grid.querySelectorAll('.ocard').forEach(function(c) { c.classList.remove('sel'); });
+      card.classList.add('sel');
+      setTimeout(function() { onSelect(item); }, 260);
+    });
+
     grid.appendChild(card);
   });
 }
-
 // ─── INIT (runs after DOM ready) ─────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', function() {
 
@@ -1352,5 +1367,60 @@ function scrollChat() {
   msgs.scrollTop = msgs.scrollHeight;
 }
 </script>
+  <style>/* Info Icon in Top-Right */
+.info-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 1px solid var(--bd2);
+  color: var(--mt);
+  font-size: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: help;
+  transition: all 0.2s;
+  z-index: 5;
+}
+
+.info-btn:hover {
+  border-color: var(--ac);
+  color: var(--ac);
+  background: var(--ac2);
+}
+
+/* Minimalist Tooltip */
+.info-tooltip {
+  visibility: hidden;
+  position: absolute;
+  bottom: 125%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 180px;
+  background: var(--s2);
+  border: 1px solid var(--bd2);
+  color: var(--tx);
+  padding: 10px;
+  border-radius: 10px;
+  font-size: 0.7rem;
+  line-height: 1.4;
+  text-align: center;
+  z-index: 10;
+  opacity: 0;
+  transition: opacity 0.3s;
+  pointer-events: none;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+}
+
+.info-btn:hover .info-tooltip,
+.info-btn:focus .info-tooltip {
+  visibility: visible;
+  opacity: 1;
+}
+  </style>
+
 </body>
 </html>
