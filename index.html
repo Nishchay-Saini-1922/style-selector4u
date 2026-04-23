@@ -220,7 +220,14 @@ header{padding:1.1rem 2rem;display:flex;align-items:center;justify-content:space
     <div class="ogrid" id="look-grid"></div>
   </div>
 </div>
-
+  <!-- GENDER -->
+<div class="page" id="page-gender">
+  <header><div class="logo">DRIP</div><div class="step-ind">5 OF 6 — GENDER</div></header>
+  <div class="pbar"><div class="pfill" style="width:83%"></div></div>
+  <div class="sbody fi"><p class="qlabel">Preference</p><h2 class="qtxt">WHAT'S YOUR VIBE?</h2>
+    <div class="ogrid" id="gen-grid"></div>
+  </div>
+</div>
 <!-- WARDROBE -->
 <div class="page" id="page-clothes">
   <header><div class="logo">DRIP</div><div class="step-ind">5 OF 5 — WARDROBE</div></header>
@@ -387,6 +394,11 @@ var OCCASIONS = [
   {emoji:'🕌',label:'Religious Event',sub:'Temple / Mosque / Church'},
   {emoji:'👨‍👩‍👧',label:'Family Function',sub:'Relatives & gatherings'},
   {emoji:'🏖️',label:'Beach / Resort',sub:'Vacation vibes'}
+];
+var GENDERS = [
+  {emoji:'👨', label:'Masculine', key:'men'},
+  {emoji:'👩', label:'Feminine', key:'women'},
+  {emoji:'✨', label:'Unisex / Both', key:'unisex'}
 ];
 
 var MOODS = [
@@ -627,7 +639,7 @@ var COLOR_HEX = {
 };
 
 // ─── STATE ───────────────────────────────────────────────────────────────────
-var S = { occasion:'', mood:'', weather:'', weatherKey:'', look:'', clothes:[] };
+var S = { occasion:'', mood:'', weather:'', weatherKey:'', look:'', gender:'', clothes:[] };
 var currentOutfit = null;
 var activeCombo = 0;
 var swapPiece = null;
@@ -726,8 +738,11 @@ document.addEventListener('DOMContentLoaded', function() {
   buildGrid('occ-grid', OCCASIONS, function(item) { S.occasion = item.label; goTo('mood'); });
   buildGrid('mood-grid', MOODS, function(item) { S.mood = item.label; goTo('weather'); });
   buildGrid('wthr-grid', WEATHER_OPTS, function(item) { S.weather = item.label; S.weatherKey = item.key; goTo('look'); });
-  buildGrid('look-grid', LOOKS, function(item) { S.look = item.label; goTo('clothes'); });
-
+  buildGrid('look-grid', LOOKS, function(item) { S.look = item.label; goTo('gender'); });
+  buildGrid('gen-grid', GENDERS, function(item) { 
+  S.gender = item.label; 
+  goTo('clothes'); 
+  });
   document.getElementById('start-btn').addEventListener('click', function() { goTo('occasion'); });
   document.getElementById('tip-yes-btn').addEventListener('click', tipYes);
   document.getElementById('tip-no-btn').addEventListener('click', tipNo);
