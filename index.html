@@ -234,7 +234,7 @@ header{padding:1.1rem 2rem;display:flex;align-items:center;justify-content:space
   <header><div class="logo">DRIP</div><div class="step-ind">6 OF 6 — WARDROBE</div></header>
   <div class="pbar"><div class="pfill" style="width:100%"></div></div>
   <div class="sbody fi" id="cl-body">
-
+  <button id="auto-drip-btn" onclick="autoDrip()" title="Randomize Best Combo">⚡</button>
     <!-- Suggestion flow -->
     <div id="cl-suggest" style="display:none;flex-direction:column;align-items:center;width:100%;">
       <p class="qlabel">AI STYLIST SUGGESTS</p>
@@ -1445,6 +1445,15 @@ function saveToStorage() {
     localStorage.setItem('drip_body', JSON.stringify(bodyState));
   }
 }
+function autoDrip() {
+    if (S.clothes.length === 0) {
+        alert("Add some clothes to your wardrobe first, bro!");
+        return;
+    }
+    // Takes you straight to the loading screen and triggers AI
+    goTo('loading');
+    startGen(); 
+}
 
 // Function to Load
 function loadFromStorage() {
@@ -1533,6 +1542,15 @@ document.getElementById('apply-body-btn').addEventListener('click', function() {
 .m-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
 .m-row span { font-size: 0.7rem; color: var(--mt); text-transform: uppercase; letter-spacing: 1px; }
 .mannequin-wrap .dtag { font-size: 0.65rem; padding: 4px 10px; }
+#auto-drip-btn {
+  position: fixed; bottom: 85px; right: 20px;
+  width: 50px; height: 50px; border-radius: 50%;
+  background: var(--ac); color: white; border: none;
+  font-size: 1.5rem; cursor: pointer; z-index: 100;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+}
+
+    
   </style>
 
 </body>
