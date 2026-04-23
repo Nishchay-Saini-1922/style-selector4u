@@ -325,11 +325,36 @@ header{padding:1.1rem 2rem;display:flex;align-items:center;justify-content:space
       <div class="opieces" id="outfit-pieces"></div>
     </div>
     <div class="rdet">
+      <div class="mannequin-wrap dsec">
+  <p class="dslabel">ADJUST MANNEQUIN</p>
+  <div class="m-controls">
+    <div class="m-row">
+      <span>Build:</span>
+      <div class="dtags" id="m-build">
+        <span class="dtag sel" onclick="updateM('build', 'Average', this)">Average</span>
+        <span class="dtag" onclick="updateM('build', 'Skinny', this)">Skinny</span>
+        <span class="dtag" onclick="updateM('build', 'Athletic', this)">Athletic</span>
+        <span class="dtag" onclick="updateM('build', 'Heavy', this)">Heavy</span>
+      </div>
+    </div>
+    <div class="m-row">
+      <span>Feature:</span>
+      <div class="dtags" id="m-spec">
+        <span class="dtag" onclick="updateM('spec', 'Busty', this)">Busty</span>
+        <span class="dtag" onclick="updateM('spec', 'Broad Shoulders', this)">Broad</span>
+        <span class="dtag" onclick="updateM('spec', 'Tall', this)">Tall</span>
+        <span class="dtag" onclick="updateM('spec', 'Petite', this)">Petite</span>
+      </div>
+    </div>
+  </div>
+  <button class="osolid" style="width:100%; margin-top:15px;" id="apply-body-btn">Re-Style for My Body →</button>
+</div>
       <div class="dsec"><p class="dslabel">Vibe Tags</p><div class="vtags" id="vibe-tags"></div></div>
       <div class="dsec"><p class="dslabel">Why This Works</p><p id="ai-desc">—</p></div>
       <div class="dsec"><p class="dslabel">Styling Tips</p><ul id="ai-tips"></ul></div>
       <div class="sbar" id="sum-bar"></div>
     </div>
+    
   </div>
 </div>
 
@@ -734,7 +759,7 @@ function buildGrid(id, items, onSelect) {
 }
 // ─── INIT (runs after DOM ready) ─────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', function() {
-
+  loadFromStorage(); // Thaw the data first
   buildGrid('occ-grid', OCCASIONS, function(item) { S.occasion = item.label; goTo('mood'); });
   buildGrid('mood-grid', MOODS, function(item) { S.mood = item.label; goTo('weather'); });
   buildGrid('wthr-grid', WEATHER_OPTS, function(item) { S.weather = item.label; S.weatherKey = item.key; goTo('look'); });
@@ -917,6 +942,9 @@ function removeClothes(id) {
   var has = S.clothes.length > 0;
   document.getElementById('suggest-done-btn').style.display = has ? 'block' : 'none';
   document.getElementById('cl-done-btn').style.display = has ? 'block' : 'none';
+  saveToStorage(); // Save after deleting an item
+
+
 }
 
 // ─── EDIT PANEL ──────────────────────────────────────────────────────────────
@@ -1142,6 +1170,9 @@ function confirmEdit() {
     document.getElementById('cl-main').style.display = 'flex';
     buildClothesGrid();
   }
+  saveToStorage(); // Save after adding an item
+
+
 }
 
 // ─── GENERATION ──────────────────────────────────────────────────────────────
@@ -1157,16 +1188,16 @@ function startGen() {
 
   var prompt =
     'You are a top Indian fashion stylist. Create 3 distinct outfit combos.\n' +
+    'Body Profile: ' + (S.bodyProfile || 'Average') + '\n' +
     'Occasion: ' + S.occasion + '\nMood: ' + S.mood + '\nWeather: ' + S.weather + ' (India)\nAesthetic: ' + S.look + '\n' +
     'Available items: ' + clothesList + '\n\n' +
-    'RULES: Only use items from the list. Use exact colors and fits. Each combo must be different. Weather-appropriate only.\n' +
+    'RULES: Only use items from the list. Use exact colors and fits. Select pieces that flatter a ' + (S.bodyProfile || 'Average') + ' frame. Each combo must be different. Weather-appropriate only.\n' +
     'If an item says [layered over X], show it as layered.\n\n' +
     'Return ONLY raw JSON, no markdown:\n' +
     '{"outfitName":"name","vibes":["v1","v2","v3"],"description":"2-3 sentences.","tips":["t1","t2","t3"],' +
     '"combos":[{"label":"Combo A","pieces":[{"icon":"👕","type":"Top","name":"exact name","detail":"styling note","layerOver":"item or empty"},...]},' +
     '{"label":"Combo B","pieces":[...]},' +
     '{"label":"Combo C","pieces":[...]}]}';
-
   callGemini(prompt, 1300)
     .then(function(raw) {
       clearInterval(iv);
@@ -1380,6 +1411,44 @@ function scrollChat() {
   var msgs = document.getElementById('chat-msgs');
   msgs.scrollTop = msgs.scrollHeight;
 }
+// Function to Save
+function saveToStorage() {
+  localStorage.setItem('drip_wardrobe', JSON.stringify(S.clothes));
+  localStorage.setItem('drip_gender', S.gender);
+  if (typeof bodyState !== 'undefined') {
+    localStorage.setItem('drip_body', JSON.stringify(bodyState));
+  }
+}
+
+// Function to Load
+function loadFromStorage() {
+  const savedClothes = localStorage.getItem('drip_wardrobe');
+  const savedGender = localStorage.getItem('drip_gender');
+  const savedBody = localStorage.getItem('drip_body');
+
+  if (savedClothes) S.clothes = JSON.parse(savedClothes);
+  if (savedGender) S.gender = savedGender;
+  if (savedBody && typeof bodyState !== 'undefined') bodyState = JSON.parse(savedBody);
+  
+} 
+
+  let bodyState = { build: 'Average', spec: '' };
+
+function updateM(type, val, el) {
+    // This part handles the visual "selection" highlight
+    el.parentNode.querySelectorAll('.dtag').forEach(t => t.classList.remove('sel'));
+    el.classList.add('sel');
+    
+    // This updates the data
+    bodyState[type] = val;
+    saveToStorage(); // Keeps it persistent
+}
+
+// This makes the button actually re-run the AI
+document.getElementById('apply-body-btn').addEventListener('click', function() {
+    S.bodyProfile = bodyState.build + (bodyState.spec ? ' and ' + bodyState.spec : '');
+    goTo('loading'); // Triggers the loading screen and startGen()
+});
 </script>
   <style>/* Info Icon in Top-Right */
 .info-btn {
@@ -1434,6 +1503,10 @@ function scrollChat() {
   visibility: visible;
   opacity: 1;
 }
+.m-controls { display: flex; flex-direction: column; gap: 12px; background: var(--s2); padding: 15px; border-radius: 12px; border: 1px solid var(--bd); }
+.m-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.m-row span { font-size: 0.7rem; color: var(--mt); text-transform: uppercase; letter-spacing: 1px; }
+.mannequin-wrap .dtag { font-size: 0.65rem; padding: 4px 10px; }
   </style>
 
 </body>
