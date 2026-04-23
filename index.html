@@ -187,7 +187,7 @@ header{padding:1.1rem 2rem;display:flex;align-items:center;justify-content:space
 
 <!-- OCCASION -->
 <div class="page" id="page-occasion">
-  <header><div class="logo">DRIP</div><div class="step-ind">1 OF 5 — OCCASION</div></header>
+  <header><div class="logo">DRIP</div><div class="step-ind">1 OF 6 — OCCASION</div></header>
   <div class="pbar"><div class="pfill" style="width:20%"></div></div>
   <div class="sbody fi"><p class="qlabel">Occasion</p><h2 class="qtxt">WHERE ARE YOU HEADING?</h2>
     <div class="ogrid wide" id="occ-grid"></div>
@@ -196,7 +196,7 @@ header{padding:1.1rem 2rem;display:flex;align-items:center;justify-content:space
 
 <!-- MOOD -->
 <div class="page" id="page-mood">
-  <header><div class="logo">DRIP</div><div class="step-ind">2 OF 5 — MOOD</div></header>
+  <header><div class="logo">DRIP</div><div class="step-ind">2 OF 6 — MOOD</div></header>
   <div class="pbar"><div class="pfill" style="width:40%"></div></div>
   <div class="sbody fi"><p class="qlabel">Mood</p><h2 class="qtxt">HOW ARE YOU FEELING?</h2>
     <div class="ogrid" id="mood-grid"></div>
@@ -205,7 +205,7 @@ header{padding:1.1rem 2rem;display:flex;align-items:center;justify-content:space
 
 <!-- WEATHER -->
 <div class="page" id="page-weather">
-  <header><div class="logo">DRIP</div><div class="step-ind">3 OF 5 — WEATHER</div></header>
+  <header><div class="logo">DRIP</div><div class="step-ind">3 OF 6 — WEATHER</div></header>
   <div class="pbar"><div class="pfill" style="width:60%"></div></div>
   <div class="sbody fi"><p class="qlabel">Weather</p><h2 class="qtxt">WHAT'S IT LIKE OUTSIDE?</h2>
     <div class="ogrid" id="wthr-grid"></div>
@@ -214,7 +214,7 @@ header{padding:1.1rem 2rem;display:flex;align-items:center;justify-content:space
 
 <!-- AESTHETIC -->
 <div class="page" id="page-look">
-  <header><div class="logo">DRIP</div><div class="step-ind">4 OF 5 — AESTHETIC</div></header>
+  <header><div class="logo">DRIP</div><div class="step-ind">4 OF 6 — AESTHETIC</div></header>
   <div class="pbar"><div class="pfill" style="width:80%"></div></div>
   <div class="sbody fi"><p class="qlabel">Aesthetic</p><h2 class="qtxt">WHAT'S YOUR DESIRED LOOK?</h2>
     <div class="ogrid" id="look-grid"></div>
@@ -230,7 +230,7 @@ header{padding:1.1rem 2rem;display:flex;align-items:center;justify-content:space
 </div>
 <!-- WARDROBE -->
 <div class="page" id="page-clothes">
-  <header><div class="logo">DRIP</div><div class="step-ind">5 OF 5 — WARDROBE</div></header>
+  <header><div class="logo">DRIP</div><div class="step-ind">6 OF 6 — WARDROBE</div></header>
   <div class="pbar"><div class="pfill" style="width:100%"></div></div>
   <div class="sbody fi" id="cl-body">
 
@@ -1295,12 +1295,11 @@ function doSwap() {
   document.querySelector('.macts').style.display = 'none';
 
   var prompt =
-    'Fashion stylist swapping one clothing piece.\n' +
-    'Original: ' + swapPiece.type + ' — "' + swapPiece.name + '"\n' +
-    'Occasion: ' + S.occasion + ', Weather: ' + S.weather + ', Look: ' + S.look + '\n' +
-    'User wants to swap with: "' + inp + '"\n' +
-    'Return ONLY raw JSON, no markdown: {"icon":"1 emoji","type":"' + swapPiece.type + '","name":"description with color","detail":"short styling note","layerOver":""}';
-
+  'You are an Indian fashion stylist. User Gender: ' + S.gender + 
+  ', Occasion: ' + S.occasion + ', Mood: ' + S.mood + ', Weather: ' + S.weather + ', Look: ' + S.look + '.' +
+  ' Suggest 8 ESSENTIAL clothing items. Focus on common, versatile basics (e.g., "Oversized White Tee" or "Black Cargoes")' +
+  ' rather than rare, hyper-specific items. Ensure items are standard for ' + S.gender + ' styling.' +
+  ' Return ONLY raw JSON array: [{"emoji":"👕","type":"T-shirt","desc":"White T-shirt","reason":"A clean base for the ' + S.look + ' look."}]';
   callGemini(prompt, 150)
     .then(function(raw) {
       try {
