@@ -289,6 +289,11 @@ header{padding:1.1rem 2rem;display:flex;align-items:center;justify-content:space
         <span class="sec-lbl">DETAILS <span style="color:var(--mt);font-size:.58rem">(OPTIONAL)</span></span>
         <div class="dtags" id="item-details"></div>
       </div>
+      <div style="margin: 15px 0;">
+  <label style="display:block; margin-bottom:5px; font-weight:bold;">Custom Details:</label>
+  <textarea id="cl-desc" placeholder="e.g., Vintage 90s faded wash, silver zippers, anime graphic on back..." 
+            style="width:100%; height:60px; background:#111; color:#fff; border:1px solid #333; border-radius:8px; padding:8px; resize:none;"></textarea>
+</div>
       <div class="csec" id="layer-sec" style="display:none">
         <span class="sec-lbl">LAYERING <span style="color:var(--mt);font-size:.58rem">(OPTIONAL)</span></span>
         <p style="font-size:.7rem;color:var(--mt);margin-bottom:.5rem">Is this worn over another item you added?</p>
@@ -987,6 +992,7 @@ function openEdit(item, prefill) {
   document.getElementById('ss-edit').classList.add('open');
   document.getElementById('ss-name').textContent = item.label.toUpperCase();
   document.getElementById('ss-hint').textContent = prefill ? 'Suggested: ' + prefill : 'Pick colors, fit and design details';
+  document.getElementById('cl-desc').value = ''; // Clears the box for the next item
 
   // Colors
   var dots = document.getElementById('item-dots');
@@ -1158,14 +1164,21 @@ function confirmEdit() {
     alert('Please pick at least one color or pattern.');
     return;
   }
+  
+  // 1. Grab custom details from the description box
+  var customDetails = document.getElementById('cl-desc').value.trim();
+
   var colorStr = editColors.length > 0 ? editColors.join(' & ') : editPattern;
   var designStr = [editPattern].concat(editDetails).filter(Boolean).join(', ');
+  
+  // 2. Append custom details to fullDesc so the AI reads it naturally
   var fullDesc =
     colorStr +
     (editPattern && editColors.length > 0 ? ' ' + editPattern : '') +
     (editFit ? ' ' + editFit : '') +
     ' ' + editItem.label +
-    (designStr ? ', ' + designStr : '');
+    (designStr ? ', ' + designStr : '') +
+    (customDetails ? ' (' + customDetails + ')' : '');
 
   S.clothes.push({
     id: Date.now() + '_' + Math.random().toString(36).slice(2, 5),
@@ -1179,8 +1192,12 @@ function confirmEdit() {
     colorStr: colorStr,
     designStr: designStr,
     fullDesc: fullDesc,
-    layerOver: editLayerOver
+    layerOver: editLayerOver,
+    customDesc: customDetails // 3. Save raw text to the clothing object
   });
+
+  // Clear the text area so it's fresh for the next item
+  document.getElementById('cl-desc').value = '';
 
   document.getElementById('ss-edit').classList.remove('open');
 
@@ -1197,10 +1214,7 @@ function confirmEdit() {
     buildClothesGrid();
   }
   saveToStorage(); // Save after adding an item
-
-
 }
-
 // ─── GENERATION ──────────────────────────────────────────────────────────────
 function startGen() {
   var msgs = ['Analyzing your wardrobe...','Mixing and matching...','Checking the vibes...','Almost ready...'];
@@ -1211,13 +1225,13 @@ function startGen() {
   var clothesList = S.clothes.map(function(c) {
     return c.fullDesc + (c.layerOver ? ' [layered over ' + c.layerOver + ']' : '');
   }).join(' | ') || 'basic wardrobe';
-
-  var prompt =
+var prompt =
     'You are a top Indian fashion stylist. Create 3 distinct outfit combos.\n' +
     'Body Profile: ' + (S.bodyProfile || 'Average') + '\n' +
     'Occasion: ' + S.occasion + '\nMood: ' + S.mood + '\nWeather: ' + S.weather + ' (India)\nAesthetic: ' + S.look + '\n' +
     'Available items: ' + clothesList + '\n\n' +
     'RULES: Only use items from the list. Use exact colors and fits. Select pieces that flatter a ' + (S.bodyProfile || 'Average') + ' frame. Each combo must be different. Weather-appropriate only.\n' +
+    'CRITICAL: Check each item for custom description details in the list. You MUST explicitly reference these custom details in your outfit descriptions/tips and use them to elevate the style rating.\n' +
     'If an item says [layered over X], show it as layered.\n\n' +
     'Return ONLY raw JSON, no markdown:\n' +
     '{"outfitName":"name","vibes":["v1","v2","v3"],"description":"2-3 sentences.","tips":["t1","t2","t3"],' +
